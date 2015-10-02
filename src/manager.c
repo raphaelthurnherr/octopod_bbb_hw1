@@ -37,7 +37,7 @@ unsigned char killAllThread=0;
 int main(void) {
 
 	system("clear");
-	printf("\nOCTOPOD V1.3.1  - 02/10/2015          \n");
+	printf("\nOctopod V1.3.1  - 02/10/2015          \n");
 	printf("---------------------------------------\n\n");
 
 	printf ("# Demarrage du gestionnaire des taches...\n");
