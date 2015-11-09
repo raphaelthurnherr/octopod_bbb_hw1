@@ -17,6 +17,12 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <netinet/in.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+
+#include <unistd.h>
+
 #include "th1_hwctrl.h"
 #include "th2_core.h"
 #include "th3_console.h"
@@ -25,8 +31,10 @@
 #include "th6_timers.h"
 #include "th7_motion.h"
 #include "tools.h"
+
 int InitMultiTasking (void);
 unsigned char killAllThread=0;
+
 
 // ***************************************************************************
 // ---------------------------------------------------------------------------
@@ -35,10 +43,23 @@ unsigned char killAllThread=0;
 // ***************************************************************************
 
 int main(void) {
+// LECTURE IP ADRESSE BBB
+	int fd;
+	struct ifreq ifr;
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	ifr.ifr_addr.sa_family = AF_INET;
+	strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
+	ioctl(fd, SIOCGIFADDR, &ifr);
+	close(fd);
+	strcpy(OctopodIPlan, inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
+
+// FIN LECTURE IP ADRESSE BBB
 
 	system("clear");
-	printf("\nOctopod V1.3.1  - 02/10/2015          \n");
+	printf("\nOctopod V1.3.2  - 09/11/2015          \n");
 	printf("---------------------------------------\n\n");
+	printf("# Octopod IP ETH0: %s \n", OctopodIPlan);
 
 	printf ("# Demarrage du gestionnaire des taches...\n");
 	// DEMARRAGE DES T�CHES
