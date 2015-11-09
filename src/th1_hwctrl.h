@@ -2,6 +2,8 @@
 #define TH1_HWCTRL_H_
 #endif
 
+#define NB_TOTAL_OF_MOTORS	26
+
 #define EYES_MOTOR 18
 
 
@@ -17,19 +19,19 @@ extern void HWctrl_displayAckToggle(unsigned char ackType);
 
 extern unsigned char th1_LowBatteryCheck(void); // Retourne (0:no warning, 1:batt A low, 2:batt B low, 3, Both Low)
 
-extern void buzzerCtrl(unsigned char bipCount);	// Séquence de bip à produire
+extern void buzzerCtrl(unsigned char bipCount);	// Sï¿½quence de bip ï¿½ produire
 
 // Configurtion buzzer (ON:1/OFF:0, timeON [ms], timeOFF [ms], Frequence BIP [ms])
 extern void buzzerConfig(unsigned char On, unsigned int t1, unsigned int t2, unsigned char tHF);
 
 extern void setMotorAngle(unsigned char motor, unsigned char angle, unsigned char speed);	// Attribue un angle au servo moteur
-extern void setMotorState(unsigned char motor, unsigned char state); 						// défini l'état ON/OFF du moteur
-extern void setMotorsInterrupt(unsigned char Enable); // Active/désactive l'interruption lorsques les moteur sont en position
+extern void setMotorState(unsigned char motor, unsigned char state); 						// dï¿½fini l'ï¿½tat ON/OFF du moteur
+extern void setMotorsInterrupt(unsigned char Enable); // Active/dï¿½sactive l'interruption lorsques les moteur sont en position
 
-// Envoie une trame compète prédéfinie
+// Envoie une trame compï¿½te prï¿½dï¿½finie
 extern void sendUartFrame(unsigned char *buffToSend, unsigned char nbByte);
 
-// Retourne La distance à un angle donné
+// Retourne La distance ï¿½ un angle donnï¿½
 extern void getUltrasonicDistance(unsigned char angle);
 extern void ReadStartUltrasonicSensor(void);
 extern void StopUltrasonicSensor(void);
@@ -50,21 +52,21 @@ extern void SetIRinterrupts(unsigned char Enable);
 extern unsigned char IRdetectValid;
 extern unsigned char IRdetectValue[3];
 
-// Valeur de distance lue [0] à l'angle [1]
+// Valeur de distance lue [0] ï¿½ l'angle [1]
 extern unsigned int ultrasonicDistance[2];
 
 // Etat de la connexion avec le controlleur de moteurs
 extern unsigned char controllerConnected;
 
-// Angles actuelle des Moteurs (Après quittance du controlleur)
-extern unsigned char motorsActualAngle[20];
-// Etat actuelle des Moteurs (Après quittance du controlleur)
-extern unsigned char motorsActualState[20];
+// Angles actuelle des Moteurs (Aprï¿½s quittance du controlleur)
+extern unsigned char motorsActualAngle[NB_TOTAL_OF_MOTORS];
+// Etat actuelle des Moteurs (Aprï¿½s quittance du controlleur)
+extern unsigned char motorsActualState[NB_TOTAL_OF_MOTORS];
 
 extern unsigned char motorsPositionValid;
 
 extern unsigned char smoothValue;
-// Demarre une commande heartbit pour connaitre l'état du controller;
+// Demarre une commande heartbit pour connaitre l'ï¿½tat du controller;
 extern void getControllerHeartBit(void);
 
 extern int createHwctrlTask(void);

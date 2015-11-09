@@ -131,10 +131,10 @@ void processUICommand(void){
 
 void changeMotion (unsigned char motionType){
 	unsigned char i;
-	static signed int correction[18];
+	static signed int correction[24];
 
 // ----- MODIFICATION DE LA HAUTEUR !
-	// MODIFIE LES OFFSET x2, x3 de chaque patte A, B, C, D, E, F pour mofifier la hauteur
+	// MODIFIE LES OFFSET x2, x3 de chaque patte A, B, C, D, E, F pour modifier la hauteur
 	if(motionType==MOTION_BODY_DW){
 			// A23, B23, C23 +
 			correction[1]=correction[2]=correction[4]=correction[5]=correction[7]=correction[8]+=5;

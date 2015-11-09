@@ -7,9 +7,9 @@ int loadConfigFile(unsigned char mode);
 unsigned char createmyMovementsTab(unsigned char seqCnt,unsigned char cmdCnt, unsigned char byteCnt);
 void cleanmyMovementsTab(unsigned char seqCnt,unsigned char cmdCnt, unsigned char byteCnt);
 
-unsigned char getNbOfSequences(void);				// Retourne le nombre de séquence total lue
+unsigned char getNbOfSequences(void);				// Retourne le nombre de sï¿½quence total lue
 unsigned char getNbOfCommands(void);					// Retourne le nombre de commandes total lue
-unsigned char getNbOfCmdForSeq(unsigned char seqNb);	// Retourne le nombre de commandes dans une séquence donnée
+unsigned char getNbOfCmdForSeq(unsigned char seqNb);	// Retourne le nombre de commandes dans une sï¿½quence donnï¿½e
 
 unsigned char i;
 
@@ -17,7 +17,7 @@ unsigned char i;
 unsigned char waitNewCmd=1;
 unsigned char startNewSeq=1;
 unsigned char configFileResult[3];
-unsigned char nbCmdPerSeq[25];				// Maximum 25 sequences
+unsigned char nbCmdPerSeq[31];
 
 //unsigned char myMovementsTab[];
 unsigned char mode=0;
@@ -36,7 +36,7 @@ unsigned char loadConfig() {
 //	   	printf(" - ouverture fichier cfg : OK\n");
 
 	   	//Tentative de creation du Tableau
-	    if(createmyMovementsTab(configFileResult[0],configFileResult[1],25)){
+	    if(createmyMovementsTab(configFileResult[0],configFileResult[1],31)){
 
 	    	// Ouverture fichier config avec chargement dans le tablea
 	    	if(loadConfigFile(1)){
@@ -54,7 +54,8 @@ unsigned char loadConfig() {
 	    	dataCommandReady=3;
 	}
 	else{
-    	printf(" - Lecture fichier cfg :      ERREUR");
+    	//printf(" - Lecture fichier cfg :      ERREUR");
+    	dataCommandReady=2;
 	}
 
 	// END TEST
@@ -79,8 +80,7 @@ int loadConfigFile(unsigned char mode){
 
     FILE *fichier = NULL;
 
-  //  fichier = fopen("test.txt", "r+");
-    fichier = fopen("hexapodRemote.cfg", "r+");
+    fichier = fopen("octopodRemote.cfg", "r+");
 
     if (fichier != NULL)
     {
@@ -139,7 +139,7 @@ int loadConfigFile(unsigned char mode){
     	    	rewind(fichier);
     	    	fclose(fichier); // On ferme le fichier qui a ete ouvert
     } else {
-    	return(-101);
+    	return(0);
     }
     return(1);
 }
@@ -222,7 +222,7 @@ unsigned char createmyMovementsTab(unsigned char seqCnt,unsigned char cmdCnt, un
 	  }
 
 
-		// Initialisation de tous les elements de myMovementsTab à 0 ensuite remplissage de myMovementsTab et affichage
+		// Initialisation de tous les elements de myMovementsTab ï¿½ 0 ensuite remplissage de myMovementsTab et affichage
 		for (seqenceNr=0;seqenceNr<seqCnt;seqenceNr++)
 		  {
 		      for (commandNr=0;commandNr<cmdCnt;commandNr++)
@@ -240,7 +240,7 @@ unsigned char createmyMovementsTab(unsigned char seqCnt,unsigned char cmdCnt, un
 }
 
 //------------------------------------------------------------------
-// Retourne le nombre de séquence total lue
+// Retourne le nombre de sï¿½quence total lue
 //------------------------------------------------------------------
 unsigned char getNbOfSequences(void){
 	return (configFileResult[0]);
@@ -254,7 +254,7 @@ unsigned char getNbOfCommands(void){
 }
 
 //------------------------------------------------------------------
-// Retourne le nombre de commande contenue dans la séquence donnée
+// Retourne le nombre de commande contenue dans la sï¿½quence donnï¿½e
 //------------------------------------------------------------------
 unsigned char getNbOfCmdForSeq(unsigned char seqNb){
 	return (nbCmdPerSeq[seqNb]);

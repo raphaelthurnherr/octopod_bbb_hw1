@@ -19,7 +19,7 @@ unsigned char runMotionInLoop=0;
 unsigned int motionTime=25;
 
 // Variable de correction d'angles pour les moteur des pattes
-signed char motorLegsCorrection[18];
+signed char motorLegsCorrection[24];
 unsigned char enableMotorCorrection = 1;
 
 
@@ -82,8 +82,8 @@ void loadHexapodMotionSeq(void){
 
 	loadingResult=loadConfig();
 	if(loadingResult==NOERR){
-		printf(" - Chargement des mouvements: OK (%d Seq & %d Cmd)\n",getNbOfSequences(),getNbOfCommands());
-	}else printf(" - Chargement des mouvements: ERREUR (code: %d)",loadingResult);
+		printf(" - Chargement mouvements octopodRemote.cfg: OK (%d Seq & %d Cmd)\n",getNbOfSequences(),getNbOfCommands());
+	}else printf(" - Chargement des mouvements octopodRemote.cfg: ERREUR (code: %d)\n",loadingResult);
 }
 
 // ---------------------------------------------------------------------------
@@ -126,7 +126,7 @@ void makeMotion(void){
 
 	static unsigned char j;
 	unsigned char k;
-	unsigned char myBufferOut[25];
+	unsigned char myBufferOut[50];
 
 	if(motorsPositionValid){
 		//for(j=0;j<getNbOfCmdForSeq(currentMotion)/2;j++){
@@ -148,7 +148,7 @@ void makeMotion(void){
 					for(i=0; i<nbMotorToModify;i++){
 						currentMotorAngle=myBufferOut[i+5] + motorLegsCorrection[i+offsetMotorToModify];
 						if(currentMotorAngle<0)currentMotorAngle=0;
-						if(currentMotorAngle>90)currentMotorAngle=90;
+						if(currentMotorAngle>120)currentMotorAngle=120;
 						myBufferOut[i+5]=currentMotorAngle;
 					}
 				}

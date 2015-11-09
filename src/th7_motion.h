@@ -11,7 +11,7 @@ extern void setMotion(unsigned char motionNb);
 extern void setMotionLoop(unsigned char motionLoopON);
 extern void setMotionSpeed(unsigned char motionSpeed);
 
-extern signed char motorLegsCorrection[18];
+extern signed char motorLegsCorrection[24];
 
 extern unsigned char runMotion;
 

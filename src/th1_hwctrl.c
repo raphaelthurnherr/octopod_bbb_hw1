@@ -93,9 +93,9 @@ unsigned char USonicSensorBusy=0;
 unsigned char CompassSensorBusy=0;
 
 // Angles actuelle des Moteurs (Apr�s quittance du controlleur)
-unsigned char motorsActualAngle[20];
+unsigned char motorsActualAngle[NB_TOTAL_OF_MOTORS];
 // Etat actuelle des Moteurs (Apr�s quittance du controlleur)
-unsigned char motorsActualState[20];
+unsigned char motorsActualState[NB_TOTAL_OF_MOTORS];
 
 // Etat de la connexion du controleur servo/ultrasons
 unsigned char controllerConnected=1;

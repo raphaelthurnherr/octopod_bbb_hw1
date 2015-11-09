@@ -57,7 +57,7 @@ int main(void) {
 // FIN LECTURE IP ADRESSE BBB
 
 	system("clear");
-	printf("\nOctopod V1.3.2  - 09/11/2015          \n");
+	printf("\nOctopod V1.3.3  - 09/11/2015          \n");
 	printf("---------------------------------------\n\n");
 	printf("# Octopod IP ETH0: %s \n", OctopodIPlan);
 
