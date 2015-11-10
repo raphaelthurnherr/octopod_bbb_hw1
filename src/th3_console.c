@@ -98,12 +98,12 @@ void *consoleTask (void * arg)
 				case	302	:	HWctrl_displayAckToggle(UART_ACK_MOTORS);
 								break;
 
-				// Modification du temps d'envoie entre les commandes (ms)
+				// Affichage ou non du hearthbit en clair
 				case	303	:	HWctrl_displayAckToggle(UART_ACK_HEARTBIT);
 								getControllerHeartBit();
 								break;
 
-				// Modification du temps d'envoie entre les commandes (ms)
+				// Affichage ou non des valeur recue de la boussole
 				case	304	:	HWctrl_displayAckToggle(UART_ACK_COMPASS);
 								break;
 
