@@ -190,7 +190,7 @@ void *hwctrlTask (void * arg)
 	  // Trame UART recue de l' afficheur LCD
 	  checkUartLCDData();
 
-	  if(hwctrl_uartDataInReady)processDataUart(); // Traitement de la trame recue
+	  if(hwctrl_uartDataInReady)	processDataUart(); // Traitement de la trame recue
 
 
 // A DEPLACER DANS CORE.... ???????????????????

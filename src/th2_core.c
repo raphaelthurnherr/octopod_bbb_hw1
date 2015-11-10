@@ -46,6 +46,12 @@ void *coreTask (void * arg){
 
 	  if(remoteCommandReadyData) processUICommand();
 
+	  // -> Traitement des commandes recues via interfaces utilisateurs
+	  // -> Controle des batteries
+	  // -> Controle de l'état du systeme
+	  // -> Raffraichissement des mesure de capteurs
+	  // -> Search my way, etc...
+
   usleep(5000);
   }
 

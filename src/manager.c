@@ -85,7 +85,7 @@ int main(void) {
 			if(!killConsoleTask())  printf( "# ARRET* tache console\n"); // TACHE CONSOLE
 		}
 
-// Contr�le chaques 30seconds
+// Controle chaques 30seconds
 		if(th6_timer30sManagerReadyFlag){
 
 			// Contr�le des l'�tat des batteries, alarme+affichage ON si warning
