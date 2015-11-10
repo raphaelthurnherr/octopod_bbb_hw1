@@ -102,8 +102,10 @@ unsigned char motorsActualAngle[NB_TOTAL_OF_MOTORS];
 // Etat actuelle des Moteurs (Apr�s quittance du controlleur)
 unsigned char motorsActualState[NB_TOTAL_OF_MOTORS];
 
-// Etat de la connexion du controleur servo/ultrasons
-unsigned char controllerConnected=1;
+// Etat de la connexion du controleur bas niveau
+unsigned char controllerConnected=0;
+unsigned char controllerUSonicConnected=0;
+unsigned char controllerCompassConnected=0;
 
 unsigned char BuzzerFreq_mS;
 
@@ -144,6 +146,9 @@ void SetIRinterrupts(unsigned char Enable);
 void updateIRstate(void);
 unsigned char IRdetectValid;
 unsigned char IRdetectValue[3]={255, 255, 255};
+
+// Controle de la diponibilité des capteurs présents
+void checkLLcontrollerDevices(void);
 
 // ***************************************************************************
 // ---------------------------------------------------------------------------
@@ -187,6 +192,8 @@ void *hwctrlTask (void * arg)
 
 	  if(hwctrl_uartDataInReady)processDataUart(); // Traitement de la trame recue
 
+
+// A DEPLACER DANS CORE.... ???????????????????
 	  // Fin de d�placement du servomoteur EYES, D�marre la mesure
 	  if(th6_timerMotorEyesMoveReadyFlag){
 		  //if(!USonicSensorBusy)StartUltrasonicMeasure();
@@ -198,7 +205,7 @@ void *hwctrlTask (void * arg)
 		  ReadStartCompassSensor();
 		  th6_timerCompassReadyFlag=0;
 	  }
-
+// FIN DEPLACEMENT DE CORE.... ???????????????????
 	  usleep(100);
 //	pthread_mutex_unlock (&my_mutex);
   }
@@ -482,10 +489,12 @@ void updateUltrasonicDistance(void){ //Data non valide
 			if(hwctrl_uartDataInReady&&(hwctrl_uartAckDisplayStatus&UART_ACK_ULTRASONIC)){
 				printf("Distance ultrasons a %d [deg]: %.1f [cm]\n",ultrasonicDistance[1],(float)ultrasonicDistance[0]/10);
 			}
+			controllerUSonicConnected=1;			// Controller considéré comme disponible
 	}
 	else //Data non valide
 		if(hwctrl_uartDataInReady&&(hwctrl_uartAckDisplayStatus&UART_ACK_ULTRASONIC)){
 			printf("Distance ultrasons a %d [deg]: INVALID\n",ultrasonicDistance[1]);
+			controllerUSonicConnected=0;			// Controller considéré comme indisponible
 		}
 
 	USonicSensorBusy=0;
@@ -505,11 +514,13 @@ void updateCompassAngle(void){ //Data non valide
 				printf("Angle d'orientation [deg]: %.1f \n",(float)compassAngle/10);
 			}
 			compassIsCalibrate=1;
+			controllerCompassConnected=1;		// Boussole considérée comme disponible
 	}
 	else{ 		//Data non valide
 		if(hwctrl_uartDataInReady&&(hwctrl_uartAckDisplayStatus&UART_ACK_COMPASS)){
 			printf("Angle d'orientation [deg]: a %.2f INVALID\n",(float)compassAngle/10);
 			compassIsCalibrate=0;
+			controllerCompassConnected=1;		// Boussole considérée comme non disponible
 		}
 	}
 
@@ -740,7 +751,7 @@ void HWctrl_displayAckToggle(unsigned char ackType){
 }
 
 
-// *********************************************************
+// *********************************************************ethernetCheck();
 // FONCTIONS DE COMMUNICATION AVEC AFICHEUR LCD
 // *********************************************************
 
@@ -770,6 +781,16 @@ void sendLCDUartFrame(unsigned char *buffToSend, unsigned char nbByte){
 }
 
 
+
+
+// --------------------------------------------------------------------------
+// Effectue une mesure sur les capteurs pour tester leur disponibilité
+// --------------------------------------------------------------------------
+void checkLLcontrollerDevices(void){
+	getControllerHeartBit();				// Présence du controleur bas niveau
+	ReadStartUltrasonicSensor();			// Présence capteur ultrasons
+	ReadStartCompassSensor();				// Présence boussole
+}
 
 // ---------------------------------------------------------------------------
 // CREATION THREAD UART

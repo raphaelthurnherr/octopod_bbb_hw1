@@ -60,6 +60,8 @@ extern unsigned int ultrasonicDistance[2];
 
 // Etat de la connexion avec le controlleur de moteurs
 extern unsigned char controllerConnected;
+extern unsigned char controllerUSonicConnected;
+extern unsigned char controllerCompassConnected;
 
 // Angles actuelle des Moteurs (Apr�s quittance du controlleur)
 extern unsigned char motorsActualAngle[NB_TOTAL_OF_MOTORS];
@@ -71,6 +73,9 @@ extern unsigned char motorsPositionValid;
 extern unsigned char smoothValue;
 // Demarre une commande heartbit pour connaitre l'�tat du controller;
 extern void getControllerHeartBit(void);
+
+// Controle de la diponibilité des capteurs présents
+extern void checkLLcontrollerDevices(void);
 
 extern int createHwctrlTask(void);
 extern int killHwctrlTask(void);
