@@ -67,6 +67,15 @@ int main(void) {
 	usleep(100000);
 	th6_timer30sManagerStart(30000);		// D�marrage Timer 30s
 
+	// Contrôle de la disponibilité du controller bas niveau et des capteur
+	checkLLcontrollerDevices();
+	usleep(100000);
+	checkLLcontrollerDevices();
+	usleep(100000);
+	// DEBUG;
+	unsigned char temp[4]={0xAA, 0x01, 0x01, 0xEE};
+	sendLCDUartFrame(temp, 4);
+
 	// ---------------------------------------------------------------------------
 	// MAIN LOOP
 	// ---------------------------------------------------------------------------
@@ -84,10 +93,11 @@ int main(void) {
 				buzzerCtrl(3);		// Test beep
 			}
 
-			ethernetCheck();		// Contrôle des connexion ethernet
+			// Contrôle des connexion ethernet
+			ethernetCheck();
 
-			printf("# Octopod IP ETH0: %s \n", OctopodEthernet.sIP_lan);
-			printf("# Octopod IP WLAN0: %s \n", OctopodEthernet.sIP_wlan);
+			printf("CHECK IP ETH0: %s \n", OctopodEthernet.sIP_lan);
+			printf("CHECK IP WLAN0: %s \n", OctopodEthernet.sIP_wlan);
 
 			th6_timer30sManagerReadyFlag=0;
 		}
