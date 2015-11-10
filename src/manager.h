@@ -4,4 +4,5 @@
 
 extern unsigned char killAllThread;
 
-char OctopodIPlan[16];
+extern struct EthernetInfo OctopodEthernet;
+

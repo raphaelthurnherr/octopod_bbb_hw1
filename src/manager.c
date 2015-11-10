@@ -33,8 +33,16 @@
 #include "tools.h"
 
 int InitMultiTasking (void);
+void ethernetCheck(void);
+
 unsigned char killAllThread=0;
 
+struct EthernetInfo{
+	char sIP_lan[16];
+	char sIP_wlan[16];
+};
+
+struct EthernetInfo OctopodEthernet;
 
 // ***************************************************************************
 // ---------------------------------------------------------------------------
@@ -43,23 +51,14 @@ unsigned char killAllThread=0;
 // ***************************************************************************
 
 int main(void) {
-// LECTURE IP ADRESSE BBB
-	int fd;
-	struct ifreq ifr;
 
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	ifr.ifr_addr.sa_family = AF_INET;
-	strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
-	ioctl(fd, SIOCGIFADDR, &ifr);
-	close(fd);
-	strcpy(OctopodIPlan, inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
-
-// FIN LECTURE IP ADRESSE BBB
+	ethernetCheck();
 
 	system("clear");
-	printf("\nOctopod V1.3.3  - 09/11/2015          \n");
+	printf("\nOctopod V1.3.4  - 10/11/2015          \n");
 	printf("---------------------------------------\n\n");
-	printf("# Octopod IP ETH0: %s \n", OctopodIPlan);
+	printf("# Octopod IP ETH0: %s \n", OctopodEthernet.sIP_lan);
+	printf("# Octopod IP WLAN0: %s \n", OctopodEthernet.sIP_wlan);
 
 	printf ("# Demarrage du gestionnaire des taches...\n");
 	// DEMARRAGE DES T�CHES
@@ -84,6 +83,11 @@ int main(void) {
 			if(BatteryCheck(1)){
 				buzzerCtrl(3);		// Test beep
 			}
+
+			ethernetCheck();		// Contrôle des connexion ethernet
+
+			printf("# Octopod IP ETH0: %s \n", OctopodEthernet.sIP_lan);
+			printf("# Octopod IP WLAN0: %s \n", OctopodEthernet.sIP_wlan);
 
 			th6_timer30sManagerReadyFlag=0;
 		}
@@ -153,4 +157,27 @@ int InitMultiTasking (void)
 */
 
 return(1);
+}
+
+
+void ethernetCheck(void){
+	// LECTURE IP ADRESSE BBB
+		int fd;
+		struct ifreq ifr;
+		struct ifreq ifrw;
+
+		fd = socket(AF_INET, SOCK_DGRAM, 0);
+		ifr.ifr_addr.sa_family = AF_INET;
+		strncpy(ifr.ifr_name, "eth0", IFNAMSIZ-1);
+		ioctl(fd, SIOCGIFADDR, &ifr);
+		close(fd);
+		strcpy(OctopodEthernet.sIP_lan, inet_ntoa(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr));
+		fd = socket(AF_INET, SOCK_DGRAM, 0);
+		ifrw.ifr_addr.sa_family = AF_INET;
+		strncpy(ifrw.ifr_name, "wlan1", IFNAMSIZ-1);
+		ioctl(fd, SIOCGIFADDR, &ifrw);
+		close(fd);
+		strcpy(OctopodEthernet.sIP_wlan, inet_ntoa(((struct sockaddr_in*)&ifrw.ifr_addr)->sin_addr));
+
+	// FIN LECTURE IP ADRESSE BBB
 }

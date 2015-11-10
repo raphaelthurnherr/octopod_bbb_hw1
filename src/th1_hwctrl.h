@@ -31,6 +31,9 @@ extern void setMotorsInterrupt(unsigned char Enable); // Active/d�sactive l'in
 // Envoie une trame comp�te pr�d�finie
 extern void sendUartFrame(unsigned char *buffToSend, unsigned char nbByte);
 
+// Envoie d'une trame vers l'afficheur LCD
+void sendLCDUartFrame(unsigned char *buffToSend, unsigned char nbByte);
+
 // Retourne La distance � un angle donn�
 extern void getUltrasonicDistance(unsigned char angle);
 extern void ReadStartUltrasonicSensor(void);

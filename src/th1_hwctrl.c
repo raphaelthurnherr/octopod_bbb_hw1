@@ -57,9 +57,14 @@ void GpioSetup(void);
 // VARIABLES PORTS SERIE
 unsigned char hwctrl_uartAckDisplayStatus=0;
 
+//Variable port série communication controleur bas niveau
 unsigned char hwctrl_uartDataInReady=0;
 unsigned char hwctrl_uartFrameIn[100];
 unsigned char myBufferIn[100];
+
+//Variable port série communication afficheur LCD
+unsigned char hwctrl_uartLCDDataInReady=0;
+unsigned char myLCDdataIn[50];
 
 unsigned char smoothValue=0;
 unsigned char motorsPositionValid;
@@ -111,13 +116,15 @@ void buzzerConfig(unsigned char On, unsigned int t1, unsigned int t2, unsigned c
 void setMotorAngle(unsigned char motor, unsigned char angle, unsigned char speed);	// Attribue un angle au servo moteur
 void setMotorState(unsigned char motor, unsigned char state); 						// d�fini l'�tat ON/OFF du moteur
 void setMotorsInterrupt(unsigned char Enable); // Active/d�sactive l'interruption lorsques les moteur sont en position
-void sendUartFrame(unsigned char *buffToSend, unsigned char nbByte);
+void sendUartFrame(unsigned char *buffToSend, unsigned char nbByte);		// Envoie d'une trame vers le contrôleur bas niveau
 
 
+void sendLCDUartFrame(unsigned char *buffToSend, unsigned char nbByte); // Envoie d'une trame vers l'afficheur LCD
 
 
+void checkUartData(void);			// Attente d'une trame UART valide recue du contrôleur bas niveau
+void checkUartLCDData(void);		// Attente d'une trame UART recu du LCD
 
-void checkUartData(void);			// Attente d'une trame UART valide
 void processDataUart(void);			// Traitement de la trame serie recue
 
 // Effectue  la mise a jour des angles et Etats des moteurs selon ack recu
@@ -148,8 +155,12 @@ void *hwctrlTask (void * arg)
 {
 	printf ("# Demarrage tache HW CTRL: OK\n");
 
-	// OUVERTURE PORT COM
+	// OUVERTURE PORT COM POUR COMMUNICATION CONTROLEUR BAS NIVEAU
 	serialSetup();
+
+	// OUVERTURE PORT COM POUR LCD
+	serial1Setup();
+
 
 	// Initialisation GPIO du syst�me
 	GpioSetup();
@@ -168,8 +179,11 @@ void *hwctrlTask (void * arg)
 
 	  buzzerCtrl(0);
 
-	  // Trame UART recue?----------------------------------
+	  // Trame UART recue du controleur bas niveau ?
 	  checkUartData();
+
+	  // Trame UART recue de l' afficheur LCD
+	  checkUartLCDData();
 
 	  if(hwctrl_uartDataInReady)processDataUart(); // Traitement de la trame recue
 
@@ -303,7 +317,7 @@ void CompassCalibrate(void){
 
 
 // ---------------------------------------------------------------------------
-// Contr�le de la reception d'une trame valide
+// Contr�le de la reception d'une trame valide recue du controleur bas niveau
 // ---------------------------------------------------------------------------
 void checkUartData(void){
 	unsigned char i;
@@ -318,6 +332,7 @@ void checkUartData(void){
 		}
 	}
 }
+
 
 // ***************************************************************************
 // ---------------------------------------------------------------------------
@@ -724,6 +739,35 @@ void HWctrl_displayAckToggle(unsigned char ackType){
 	else hwctrl_uartAckDisplayStatus|=ackType;
 }
 
+
+// *********************************************************
+// FONCTIONS DE COMMUNICATION AVEC AFICHEUR LCD
+// *********************************************************
+
+
+// ---------------------------------------------------------------------------
+// Contr�le de la reception d'une trame valide recue de l'afficheur LCD
+// ---------------------------------------------------------------------------
+void checkUartLCDData(void){
+	unsigned char i;
+
+	if(serial1Read(myLCDdataIn)){
+			hwctrl_uartLCDDataInReady=1;
+			// DEBUG
+			sendLCDUartFrame("Bonjour\n", 8);
+	}
+}
+
+// ----------------------------------------------
+// sendLCDUartFrame
+// ----------------------------------------------
+void sendLCDUartFrame(unsigned char *buffToSend, unsigned char nbByte){
+
+	while(flag_uart1OutBusy);
+		flag_uart1OutBusy=1;
+	serial1Write(buffToSend, nbByte);
+	flag_uart1OutBusy=0;
+}
 
 
 
