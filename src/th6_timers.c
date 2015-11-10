@@ -39,7 +39,7 @@ unsigned char 	tmr_USonicSampleRunFlag=0;
 // Timers 300ms Pour mesure de d'angle d'orientation
 void th6_timerCompassStart(unsigned int xmS);
 void th6_timerCompassStop(void);
-unsigned char th6_timerCompassReadyFlag=1;
+unsigned char th6_timerCompassReadyFlag=0;
 unsigned int 	tmr_CompassTarget=1;
 unsigned int 	tmr_CompassCnt=0;
 unsigned char 	tmr_CompassRunFlag=0;
@@ -47,7 +47,7 @@ unsigned char 	tmr_CompassRunFlag=0;
 // Timers 20ms pour attente de d�placement sevomoteur
 void th6_timerMotorEyesMoveStart(unsigned int xmS);
 void th6_timerMotorEyesMoveStop(void);
-unsigned char th6_timerMotorEyesMoveReadyFlag=1;
+unsigned char th6_timerMotorEyesMoveReadyFlag=0;
 unsigned int 	tmr_MotorEyesMoveTarget=1;
 unsigned int 	tmr_MotorEyesMoveCnt=0;
 unsigned char 	tmr_MotorEyesMoveRunFlag=0;
