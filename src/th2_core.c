@@ -21,8 +21,64 @@ unsigned char remoteCommandReadyData=0;
 unsigned char motionSpeed=3;
 unsigned char motionLoop=0;
 unsigned char AIenable=0;
-unsigned char distanceAtAngle[90];
+
 unsigned char i;
+
+struct SysStatus{
+	unsigned char AppStarted;
+	unsigned char LLHwConnected;
+	unsigned char LanWifiReady;
+	unsigned char LanEthReady;
+	unsigned char Batt1Warning;
+	unsigned char Batt2Warning;
+};
+
+struct ApplicationStatus{
+	unsigned char AutoMode;
+	unsigned char MotionRun;
+	unsigned char MotionSpeed;
+	unsigned char ScanZone;
+};
+
+struct hwStatus{
+	unsigned char USonicReady;
+	unsigned char CompassReady;
+	unsigned char IR0State;
+	unsigned char IR1State;
+	unsigned char IR2State;
+};
+
+struct MotStatus{
+	unsigned char State[26];
+	unsigned char Angle[26];
+};
+
+struct SensStatus{
+	unsigned char DistanceValid;
+	unsigned char CompassValid;
+	unsigned char CompassIsCalibrate;
+	int	Heading;
+	int Distance;
+	int DistanceMotorX;
+	int DistanceMotorY;
+};
+
+struct WayFinder{
+	unsigned char distanceMap[90];
+	int OptimalDistance;
+	int OptimalAngle;
+};
+
+
+
+struct SysStatus SystemStatus;
+struct ApplicationStatus OctopodStatus;
+struct hwStatus LLHwStatus;
+struct MotStatus MotorsStatus;
+struct SensStatus SensorsStatus;
+struct WayFinder MeasureMap;
+
+
 
 unsigned char SearchMyWay(unsigned char *myScan, unsigned char depth, unsigned char DisplayResult);
 
@@ -32,6 +88,7 @@ void UICommand(unsigned char Command);
 
 void changeMotion (unsigned char motionType);
 
+void systemCheck(void);
 
 // ***************************************************************************
 // ---------------------------------------------------------------------------
@@ -42,17 +99,21 @@ void changeMotion (unsigned char motionType);
 void *coreTask (void * arg){
 	printf ("# Demarrage tache CORE: OK\n");
 
+
+
 	while(!killAllThread){
 
-	  if(remoteCommandReadyData) processUICommand();
+		// Contrôle l'état global du système
+		systemCheck();
 
-	  // -> Traitement des commandes recues via interfaces utilisateurs
-	  // -> Controle des batteries
-	  // -> Controle de l'�tat du systeme
+	//  Traitement des commandes recues via interfaces utilisateurs (Console, TCP)
+		if(remoteCommandReadyData) processUICommand();
+
+
 	  // -> Raffraichissement des mesure de capteurs
 	  // -> Search my way, etc...
 
-  usleep(5000);
+  usleep(10000);
   }
 
   printf( "# ARRET tache CORE\n");
@@ -84,7 +145,8 @@ unsigned char SearchMyWay(unsigned char *myScan, unsigned char depth, unsigned c
 		  printf("| %d \n\n",bestWay);
 
 	  }
-	  setMotorAngle(18,45,1);	// Attribue un angle au servo moteur
+	  setMotorAngle(EYES_MOTOR_X,60,1);	// Attribue un angle au servo moteur X
+	  setMotorAngle(EYES_MOTOR_Y,60,1);	// Attribue un angle au servo moteur Y
 	  return(bestWay);
 }
 
@@ -104,7 +166,7 @@ void processUICommand(void){
 	usleep(10000);
 	switch(myCommand){
 		case TEST_SEARCH_SCAN : break;
-		case TEST_SEARCH_BEST_WAY : SearchMyWay(distanceAtAngle, 1, 1); break;
+		case TEST_SEARCH_BEST_WAY : SearchMyWay(MeasureMap.distanceMap, 1, 1); break;
 		case TEST_BUZZER : buzzerCtrl(myValue); break;
 		case TEST_LEGS : break;
 		case REMOTE_RUN_AI : AIenable=1; break;
@@ -182,7 +244,7 @@ void changeMotion (unsigned char motionType){
 	if(motionType==MOTION_BODY_BACK){
 		// A1, B1, C1 +
 		correction[0]=correction[3]=correction[6]+=5;
-		// D1, E1, E1 - (moteur a l'envers mecaniquement)
+		// D1, E1, E1 - (moteurai a l'envers mecaniquement)
 		correction[9]=correction[12]=correction[15]-=5;
 		}
 
@@ -221,6 +283,84 @@ void changeMotion (unsigned char motionType){
 	}
 
 }
+
+
+// ---------------------------------------------------------------------------
+// CONTROLE DE L'ETAT GLOBAL DU SYSTEM
+// ---------------------------------------------------------------------------
+void systemCheck(void){
+
+	// Contrôle que les tâches applications systeme sont prêtes)
+			if(SystemTaskReady)SystemStatus.AppStarted=TRUE;
+			else SystemStatus.AppStarted=FALSE;
+
+	// Controle des connexions ethernet
+			if(SystemIPlan[0]==192)SystemStatus.LanEthReady=TRUE;
+			else SystemStatus.LanEthReady=FALSE;
+
+			if(SystemIPwlan[0]==192)SystemStatus.LanWifiReady=TRUE;
+			else SystemStatus.LanWifiReady=FALSE;
+
+	// Contrôle de l'état des batteries
+			SystemStatus.Batt1Warning=SystemBatteryWarning[0];
+			SystemStatus.Batt2Warning=SystemBatteryWarning[1];
+
+	// Contrôle de la connexion du contrôleur hardware bas niveau
+			if(!SystemStatus.LLHwConnected){
+				// Contrôle de la disponibilité du controller bas niveau et des capteurs
+				getControllerHeartBit();				// Présence du controleur bas niveau
+				usleep(50000);
+
+				if(controllerConnected){
+					SystemStatus.LLHwConnected=TRUE;
+					controllerConnected=FALSE;
+				}else SystemStatus.LLHwConnected=FALSE;
+
+				usleep(50000);
+			}
+	// Controleur connecté, essais des capteurs
+				if(SystemStatus.LLHwConnected){
+					// Controle de la disponibilité du capteur ultrasons (Disponible si echo...)
+							if(!LLHwStatus.USonicReady){
+
+								ReadStartUltrasonicSensor();			// 1ère mesure non valide par défaut
+								usleep(100000);
+								ReadStartUltrasonicSensor();			// Présence capteur ultrasons
+								usleep(100000);
+
+								if(controllerUSonicConnected) LLHwStatus.USonicReady=TRUE;
+								else LLHwStatus.USonicReady=FALSE;
+							}
+
+
+					// Controle de la disponibilité de la boussole
+							if(!LLHwStatus.CompassReady){
+
+								ReadStartCompassSensor();				// Présence boussole
+								usleep(100000);
+								ReadStartCompassSensor();				// Présence boussole
+								usleep(100000);
+
+								if(controllerCompassConnected) LLHwStatus.CompassReady=TRUE;
+								else LLHwStatus.CompassReady=FALSE;
+							}
+
+
+							// Contrôle de l'état des capteurs infrarouge, mise sous interruption
+							SetIRinterrupts(1);
+							usleep(50000);
+
+							if(IRdetectValid){
+								LLHwStatus.IR0State = IRdetectValue[0];
+								LLHwStatus.IR1State = IRdetectValue[1];
+								LLHwStatus.IR2State = IRdetectValue[2];
+							}
+				}
+
+			//	printf("\nSystem status: %d %d %d %d %d %d\n",SystemStatus.AppStarted, SystemStatus.LLHwConnected, SystemStatus.LanEthReady, SystemStatus.LanWifiReady, SystemStatus.Batt1Warning, SystemStatus.Batt2Warning);
+			//	printf("Octopod status: %d %d %d %d %d\n",LLHwStatus.USonicReady, LLHwStatus.CompassReady, LLHwStatus.IR0State, LLHwStatus.IR1State, LLHwStatus.IR2State);
+}
+
 
 // ---------------------------------------------------------------------------
 // CREATION THREAD UART

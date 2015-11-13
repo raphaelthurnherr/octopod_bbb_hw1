@@ -147,12 +147,10 @@ void updateIRstate(void);
 unsigned char IRdetectValid;
 unsigned char IRdetectValue[3]={255, 255, 255};
 
-// Controle de la diponibilité des capteurs présents
-void checkLLcontrollerDevices(void);
 
 // ***************************************************************************
 // ---------------------------------------------------------------------------
-// THREAD GESTION UART
+// THREAD GESTION UARTIRdetectValid
 // ---------------------------------------------------------------------------
 // ***************************************************************************
 
@@ -178,11 +176,12 @@ void *hwctrlTask (void * arg)
 
 	//SetIRinterrupts(1);
 
+	buzzerCtrl(0);
 
 	while(!killAllThread){
 //	  pthread_mutex_lock (&my_mutex);
 
-	  buzzerCtrl(0);
+
 
 	  // Trame UART recue du controleur bas niveau ?
 	  checkUartData();
@@ -193,7 +192,6 @@ void *hwctrlTask (void * arg)
 	  if(hwctrl_uartDataInReady)	processDataUart(); // Traitement de la trame recue
 
 
-// A DEPLACER DANS CORE.... ???????????????????
 	  // Fin de d�placement du servomoteur EYES, D�marre la mesure
 	  if(th6_timerMotorEyesMoveReadyFlag){
 		  //if(!USonicSensorBusy)StartUltrasonicMeasure();
@@ -205,7 +203,9 @@ void *hwctrlTask (void * arg)
 		  ReadStartCompassSensor();
 		  th6_timerCompassReadyFlag=0;
 	  }
-// FIN DEPLACEMENT DE CORE.... ???????????????????
+
+
+
 	  usleep(100);
 //	pthread_mutex_unlock (&my_mutex);
   }
@@ -236,7 +236,7 @@ void getControllerHeartBit(void){
 
 // Retourne La distance � un angle donn�, moteur vitesse max !
 void getUltrasonicDistance(unsigned char angle){
-		setMotorAngle(EYES_MOTOR,angle, 1);
+		setMotorAngle(EYES_MOTOR_X,angle, 1);
 		th6_timerMotorEyesMoveStart(90);
 }
 
@@ -485,7 +485,7 @@ void updateUltrasonicDistance(void){ //Data non valide
 
 	if(hwctrl_uartFrameIn[FRM_USONIC_DATA_VALID]){
 		 ultrasonicDistance[0]=hwctrl_uartFrameIn[FRM_USONIC_DATA_MEASURE_L]+(hwctrl_uartFrameIn[FRM_USONIC_DATA_MEASURE_H]*256);
-		 ultrasonicDistance[1]=motorsActualAngle[EYES_MOTOR];
+		 ultrasonicDistance[1]=motorsActualAngle[EYES_MOTOR_X];
 			if(hwctrl_uartDataInReady&&(hwctrl_uartAckDisplayStatus&UART_ACK_ULTRASONIC)){
 				printf("Distance ultrasons a %d [deg]: %.1f [cm]\n",ultrasonicDistance[1],(float)ultrasonicDistance[0]/10);
 			}
@@ -660,11 +660,9 @@ void setMotorsInterrupt(unsigned char Enable){
 void SetIRinterrupts(unsigned char Enable){
 	while(flag_uartOutBusy);
 	flag_uartOutBusy=1;
-	unsigned char BufferOut[6]={170,2,32,Enable,Enable,Enable};
+	unsigned char BufferOut[6]={170,4,32,Enable,Enable,Enable};
 	serialWrite(BufferOut, 6);
 	flag_uartOutBusy=0;
-
-	IRdetectValid=0;
 }
 
 
@@ -714,7 +712,6 @@ void SetCompassInterruptsRange(unsigned int angleMin, unsigned int angleMax){
 
 void updateIRstate(void){
 
-	if(1){
 	//if(hwctrl_uartFrameIn[FRM_IR_DATA_VALID]){
 		IRdetectValue[0]=hwctrl_uartFrameIn[FRM_IR0_DATAVALUE];
 		IRdetectValue[1]=hwctrl_uartFrameIn[FRM_IR1_DATAVALUE];
@@ -723,13 +720,6 @@ void updateIRstate(void){
 				printf("Interruption capteurs: IR0 %d IR1 %d IR2 %d \n",IRdetectValue[0],IRdetectValue[1],IRdetectValue[2]);
 			}
 			IRdetectValid=1;
-	}
-	else {		//Data non valide
-			if(hwctrl_uartDataInReady&&(hwctrl_uartAckDisplayStatus&UART_ACK_IR)){
-				printf("Interruption capteurs: INVALID \n");
-			}
-			IRdetectValid=0;
-	}
 }
 
 // ----------------------------------------------
@@ -760,12 +750,9 @@ void HWctrl_displayAckToggle(unsigned char ackType){
 // Contr�le de la reception d'une trame valide recue de l'afficheur LCD
 // ---------------------------------------------------------------------------
 void checkUartLCDData(void){
-	unsigned char i;
 
 	if(serial1Read(myLCDdataIn)){
 			hwctrl_uartLCDDataInReady=1;
-			// DEBUG
-			sendLCDUartFrame("Bonjour\n", 8);
 	}
 }
 
@@ -780,17 +767,6 @@ void sendLCDUartFrame(unsigned char *buffToSend, unsigned char nbByte){
 	flag_uart1OutBusy=0;
 }
 
-
-
-
-// --------------------------------------------------------------------------
-// Effectue une mesure sur les capteurs pour tester leur disponibilité
-// --------------------------------------------------------------------------
-void checkLLcontrollerDevices(void){
-	getControllerHeartBit();				// Présence du controleur bas niveau
-	ReadStartUltrasonicSensor();			// Présence capteur ultrasons
-	ReadStartCompassSensor();				// Présence boussole
-}
 
 // ---------------------------------------------------------------------------
 // CREATION THREAD UART

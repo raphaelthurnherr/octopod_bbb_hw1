@@ -25,6 +25,7 @@ void *aiTask (void * arg)
   while(!killAllThread){
 //	  pthread_mutex_lock (&my_mutex);
 
+	  /*
 	  // D�marrage de la s�quence en autonomie
 	  if(AIenable){
 		  if(!compassIsCalibrate){
@@ -46,7 +47,7 @@ void *aiTask (void * arg)
 			  }
 		  }
 	  }
-
+*/
 
 //	pthread_mutex_unlock (&my_mutex);
   usleep(10000);

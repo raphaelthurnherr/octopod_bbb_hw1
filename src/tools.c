@@ -68,7 +68,7 @@ void ScanZone(unsigned char fromAngle, unsigned char toAngle, unsigned char angl
 	signed char angleActual=0;
 
 	// SERVOMOTEUR ULTRASON ACTIF
-	setMotorState(EYES_MOTOR,1);
+	setMotorState(EYES_MOTOR_X,1);
 	usleep(100000);
 	ReadStartUltrasonicSensor();
 

@@ -2,6 +2,9 @@
 #define TH1_CORE_H_
 #endif
 
+#define TRUE					1
+#define FALSE					0
+
 #define NO_COMMAND				0
 #define TEST_SEARCH_SCAN		1
 #define TEST_SEARCH_BEST_WAY	2
@@ -33,11 +36,15 @@
 #define MOTION_HAND_OPEN		6
 #define MOTION_HAND_CLOSE		7
 
-
 #define MOTION_RESET			9
 
-extern unsigned char AIenable;
 
+extern struct SysStatus SystemStatus;
+extern struct ApplicationStatus OctopodStatus;
+extern struct hwStatus LLHwStatus;
+extern struct MotStatus MotorsStatus;
+extern struct SensStatus SensorsStatus;
+extern struct WayFinder MeasureMap;
 
 extern int createCoreTask(void);
 extern int killCoreTask(void);

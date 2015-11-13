@@ -136,6 +136,7 @@ void *timersTask (void * arg)
 		 th6_timerMotionIntervalReadyFlag=1;
 		 tmr_MotionIntervalCnt=0;
 	 }
+
 	 if(tmr_MotionIntervalRunFlag)tmr_MotionIntervalCnt++;
 
 //	pthread_mutex_unlock (&my_mutex);

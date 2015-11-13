@@ -4,7 +4,8 @@
 
 #define NB_TOTAL_OF_MOTORS	26
 
-#define EYES_MOTOR 18
+#define EYES_MOTOR_X 24
+#define EYES_MOTOR_Y 25
 
 
 // Masque d' affichage des ACK UART
@@ -32,7 +33,7 @@ extern void setMotorsInterrupt(unsigned char Enable); // Active/d�sactive l'in
 extern void sendUartFrame(unsigned char *buffToSend, unsigned char nbByte);
 
 // Envoie d'une trame vers l'afficheur LCD
-void sendLCDUartFrame(unsigned char *buffToSend, unsigned char nbByte);
+extern void sendLCDUartFrame(unsigned char *buffToSend, unsigned char nbByte);
 
 // Retourne La distance � un angle donn�
 extern void getUltrasonicDistance(unsigned char angle);
@@ -71,11 +72,13 @@ extern unsigned char motorsActualState[NB_TOTAL_OF_MOTORS];
 extern unsigned char motorsPositionValid;
 
 extern unsigned char smoothValue;
+
+//Variable port série communication afficheur LCD
+extern unsigned char hwctrl_uartLCDDataInReady;
+
 // Demarre une commande heartbit pour connaitre l'�tat du controller;
 extern void getControllerHeartBit(void);
 
-// Controle de la diponibilité des capteurs présents
-extern void checkLLcontrollerDevices(void);
 
 extern int createHwctrlTask(void);
 extern int killHwctrlTask(void);

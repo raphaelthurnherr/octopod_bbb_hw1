@@ -4,5 +4,8 @@
 
 extern unsigned char killAllThread;
 
-extern struct EthernetInfo OctopodEthernet;
+extern unsigned char SystemIPlan[4];
+extern unsigned char SystemIPwlan[4];
+extern unsigned char SystemBatteryWarning[2];
 
+extern char SystemTaskReady;
