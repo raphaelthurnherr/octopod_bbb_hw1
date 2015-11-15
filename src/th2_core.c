@@ -24,62 +24,6 @@ unsigned char AIenable=0;
 
 unsigned char i;
 
-struct SysStatus{
-	unsigned char AppStarted;
-	unsigned char LLHwConnected;
-	unsigned char LanWifiReady;
-	unsigned char LanEthReady;
-	unsigned char Batt1Warning;
-	unsigned char Batt2Warning;
-};
-
-struct ApplicationStatus{
-	unsigned char AutoMode;
-	unsigned char MotionRun;
-	unsigned char MotionSpeed;
-	unsigned char ScanZone;
-};
-
-struct hwStatus{
-	unsigned char USonicReady;
-	unsigned char CompassReady;
-	unsigned char IR0State;
-	unsigned char IR1State;
-	unsigned char IR2State;
-};
-
-struct MotStatus{
-	unsigned char State[26];
-	unsigned char Angle[26];
-};
-
-struct SensStatus{
-	unsigned char DistanceValid;
-	unsigned char CompassValid;
-	unsigned char CompassIsCalibrate;
-	int	Heading;
-	int Distance;
-	int DistanceMotorX;
-	int DistanceMotorY;
-};
-
-struct WayFinder{
-	unsigned char distanceMap[90];
-	int OptimalDistance;
-	int OptimalAngle;
-};
-
-
-
-struct SysStatus SystemStatus;
-struct ApplicationStatus OctopodStatus;
-struct hwStatus LLHwStatus;
-struct MotStatus MotorsStatus;
-struct SensStatus SensorsStatus;
-struct WayFinder MeasureMap;
-
-
-
 unsigned char SearchMyWay(unsigned char *myScan, unsigned char depth, unsigned char DisplayResult);
 
 void processUICommand(void);
@@ -100,8 +44,8 @@ void *coreTask (void * arg){
 	printf ("# Demarrage tache CORE: OK\n");
 
 
-
-	while(!killAllThread){
+	RunningTask += TH2_SOA;
+	while(!EndOfApp){
 
 		// Contrôle l'état global du système
 		systemCheck();
@@ -113,14 +57,13 @@ void *coreTask (void * arg){
 	  // -> Raffraichissement des mesure de capteurs
 	  // -> Search my way, etc...
 
-  usleep(10000);
+  usleep(500000);
   }
 
   printf( "# ARRET tache CORE\n");
 
   usleep(10000);
-
-  killAllThread+=1;
+  RunningTask -= TH2_SOA;
   pthread_exit (0);
 }
 
@@ -295,10 +238,10 @@ void systemCheck(void){
 			else SystemStatus.AppStarted=FALSE;
 
 	// Controle des connexions ethernet
-			if(SystemIPlan[0]==192)SystemStatus.LanEthReady=TRUE;
+			if(SystemLan.bIP_lan[0]==192)SystemStatus.LanEthReady=TRUE;
 			else SystemStatus.LanEthReady=FALSE;
 
-			if(SystemIPwlan[0]==192)SystemStatus.LanWifiReady=TRUE;
+			if(SystemLan.bIP_wlan[0]==192)SystemStatus.LanWifiReady=TRUE;
 			else SystemStatus.LanWifiReady=FALSE;
 
 	// Contrôle de l'état des batteries

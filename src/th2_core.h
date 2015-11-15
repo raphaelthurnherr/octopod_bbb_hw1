@@ -39,12 +39,66 @@
 #define MOTION_RESET			9
 
 
-extern struct SysStatus SystemStatus;
-extern struct ApplicationStatus OctopodStatus;
-extern struct hwStatus LLHwStatus;
-extern struct MotStatus MotorsStatus;
-extern struct SensStatus SensorsStatus;
-extern struct WayFinder MeasureMap;
+struct SysStatus{
+	unsigned char AppStarted;
+	unsigned char LLHwConnected;
+	unsigned char LanWifiReady;
+	unsigned char LanEthReady;
+	unsigned char Batt1Warning;
+	unsigned char Batt2Warning;
+};
+
+struct EthernetInfo{
+	char sIP_lan[16];
+	char sIP_wlan[16];
+	unsigned char bIP_lan[4];
+	unsigned char bIP_wlan[4];
+};
+
+struct ApplicationStatus{
+	unsigned char AutoMode;
+	unsigned char MotionRun;
+	unsigned char MotionSpeed;
+	unsigned char ScanZone;
+};
+
+struct hwStatus{
+	unsigned char USonicReady;
+	unsigned char CompassReady;
+	unsigned char IR0State;
+	unsigned char IR1State;
+	unsigned char IR2State;
+};
+
+struct MotStatus{
+	unsigned char State[26];
+	unsigned char Angle[26];
+};
+
+struct SensStatus{
+	unsigned char DistanceValid;
+	unsigned char CompassValid;
+	unsigned char CompassIsCalibrate;
+	int	Heading;
+	int Distance;
+	unsigned char DistanceMotorX;
+	unsigned char DistanceMotorY;
+};
+
+struct WayFinder{
+	unsigned char distanceMap[90];
+	int OptimalDistance;
+	int OptimalAngle;
+};
+
+
+struct SysStatus SystemStatus;
+struct ApplicationStatus OctopodStatus;
+struct hwStatus LLHwStatus;
+struct MotStatus MotorsStatus;
+struct SensStatus SensorsStatus;
+struct WayFinder MeasureMap;
+struct EthernetInfo SystemLan;
 
 extern int createCoreTask(void);
 extern int killCoreTask(void);
