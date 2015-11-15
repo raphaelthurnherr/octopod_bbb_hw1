@@ -27,7 +27,9 @@ void *tcpTask (void * arg)
 		printf( "# Demarrage tache TCP sur port %d: ERREUR\n",TCP_PORT );
 	}
 
-  while(!killAllThread){
+	RunningTask += TH4_SOA;
+
+  while(!EndOfApp){
 //	  pthread_mutex_lock (&my_mutex);
 
 		printf(" - Attente de client TCP...\n");
@@ -196,8 +198,7 @@ void *tcpTask (void * arg)
   printf( "# ARRET tache TCP\n");
 
   usleep(10000);
-
-  killAllThread+=1;
+  RunningTask -= TH4_SOA;
   pthread_exit (0);
 }
 

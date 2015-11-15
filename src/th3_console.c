@@ -13,6 +13,7 @@
 pthread_t th_console;
 
 unsigned char motionInLoop=0;
+
 // ***************************************************************************
 // ---------------------------------------------------------------------------
 // THREAD HEXAPOD CONSOLE: Gestion interface UI via console
@@ -26,7 +27,8 @@ void *consoleTask (void * arg)
 
 	printf ("# Demarrage tache CONSOLE: OK\n");
 
-	while(!killAllThread){
+	RunningTask += TH3_SOA;
+	while(!EndOfApp){
 	//	  pthread_mutex_lock (&my_mutex);
 
 		// AFFICHAGE DU MENU DANS LA CONSOLE
@@ -54,12 +56,6 @@ void *consoleTask (void * arg)
 		printf(" -> ");
 
 		scanf("%d",&myConsoleCommand);
-
-		// COMMANDE FIN D'APPLICATION
-		if(myConsoleCommand ==666){
-			//cleanmyMovementsTab(configFileResult[0],configFileResult[1],25);
-			break;
-		}
 
 		if(myConsoleCommand<100){
 			th7_displayMotionSeq(myConsoleCommand);
@@ -146,6 +142,9 @@ void *consoleTask (void * arg)
 				case	601	:	UICommand(CALIB_HEXAPOD);
 								break;
 
+				case	666	:	EndOfApp=1;
+								break;
+
 				default		:	printf("Commande inconnue !\n->");
 			}
 		}
@@ -156,10 +155,7 @@ void *consoleTask (void * arg)
   }
 
   printf( "# ARRET tache CONSOLE\n");
-
-  usleep(10000);
-
-  killAllThread+=1;
+  RunningTask -= TH3_SOA;
   pthread_exit (0);
 }
 

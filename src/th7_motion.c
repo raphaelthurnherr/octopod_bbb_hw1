@@ -49,7 +49,8 @@ void *motionTask (void * arg)
 
 	th6_timerMotionIntervalInit(motionTime);
 
-	while(!killAllThread){
+	RunningTask += TH7_SOA;
+	while(!EndOfApp){
 		//	  pthread_mutex_lock (&my_mutex);
 		if(runMotion)th6_timerMotionIntervalStart();
 
@@ -68,8 +69,7 @@ void *motionTask (void * arg)
 	printf( "# ARRET tache MOTION\n");
 
 	usleep(10000);
-
-	killAllThread+=1;
+	RunningTask -= TH7_SOA;
 	pthread_exit (0);
 }
 

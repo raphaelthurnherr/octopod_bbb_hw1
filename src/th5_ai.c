@@ -21,8 +21,8 @@ unsigned char CompassCalibStarted;	// Flag calibration boussole en cours
 void *aiTask (void * arg)
 {
 	printf ("# Demarrage tache AI: OK\n");
-
-  while(!killAllThread){
+	RunningTask += TH5_SOA;
+  while(!EndOfApp){
 //	  pthread_mutex_lock (&my_mutex);
 
 	  /*
@@ -57,7 +57,7 @@ void *aiTask (void * arg)
 
   usleep(10000);
 
-  killAllThread+=1;
+  RunningTask -= TH5_SOA;
   pthread_exit (0);
 }
 

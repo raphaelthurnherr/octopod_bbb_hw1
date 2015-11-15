@@ -82,7 +82,8 @@ void *timersTask (void * arg)
 {
 	printf ("# Demarrage tache TIMERS: OK\n");
 
-  while(!killAllThread){
+	RunningTask += TH6_SOA;
+  while(!EndOfApp){
 //	  pthread_mutex_lock (&my_mutex);
 
 	 // Evaluation timer synth�tiseur de fr�quence
@@ -147,8 +148,7 @@ void *timersTask (void * arg)
   printf( "# ARRET tache TIMERS\n");
 
   usleep(10000);
-
-  killAllThread+=1;
+  RunningTask -= TH6_SOA;
   pthread_exit (0);
 }
 
