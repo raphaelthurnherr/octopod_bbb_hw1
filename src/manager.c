@@ -55,7 +55,7 @@ int main(void) {
 	ethernetCheck();
 
 	system("clear");
-	printf("\nOctopod V1.3.5  - 13/11/2015          \n");
+	printf("\nOctopod V1.3.5  - 15/11/2015          \n");
 	printf("---------------------------------------\n\n");
 	printf("# Octopod IP ETH0: %s \n", SystemLan.sIP_lan);
 	printf("# Octopod IP WLAN0: %s \n", SystemLan.sIP_wlan);
