@@ -164,7 +164,6 @@ void *hwctrlTask (void * arg)
 	// OUVERTURE PORT COM POUR LCD
 	serial1Setup();
 
-
 	// Initialisation GPIO du syst�me
 	GpioSetup();
 
@@ -173,12 +172,11 @@ void *hwctrlTask (void * arg)
 
 	usleep(10000);
 
-
-	//SetIRinterrupts(1);
-
 	buzzerCtrl(0);
 
-	while(!killAllThread){
+	RunningTask += TH1_SOA;
+
+	while(!EndOfApp){
 //	  pthread_mutex_lock (&my_mutex);
 
 
@@ -204,8 +202,6 @@ void *hwctrlTask (void * arg)
 		  th6_timerCompassReadyFlag=0;
 	  }
 
-
-
 	  usleep(100);
 //	pthread_mutex_unlock (&my_mutex);
   }
@@ -215,10 +211,7 @@ void *hwctrlTask (void * arg)
   iolib_free();											// Lib�re l'acc�s aux gpios
 
   printf( "# ARRET tache HW CTRL\n");
-
-  usleep(10000);
-
-  killAllThread+=1;
+  RunningTask -= TH1_SOA;
   pthread_exit (0);
 }
 
