@@ -40,6 +40,8 @@ void setMotionSpeed(unsigned char motionSpeed);
 
 void *motionTask (void * arg)
 {
+	RunningTask += TH7_SOA;
+
 	printf ("# Demarrage tache MOTION: OK\n");
 
 	// Chargement des s�quences de mouvement (hexapodRemote.cfg)
@@ -49,18 +51,17 @@ void *motionTask (void * arg)
 
 	th6_timerMotionIntervalInit(motionTime);
 
-	RunningTask += TH7_SOA;
+
 	while(!EndOfApp){
 		//	  pthread_mutex_lock (&my_mutex);
 		if(runMotion)th6_timerMotionIntervalStart();
-
 		else th6_timerMotionIntervalStop();
 
 		if(th6_timerMotionIntervalReadyFlag){
 			th6_timerMotionIntervalInit(motionTime);
 			makeMotion();
 			th6_timerMotionIntervalReadyFlag=0;
-			}
+		}
 
 			//	pthread_mutex_unlock (&my_mutex);
 		usleep(25000);
@@ -128,7 +129,10 @@ void makeMotion(void){
 	unsigned char k;
 	unsigned char myBufferOut[50];
 
-	if(motorsPositionValid){
+	if(motorsPositionValid | !motorsInterruptEnable){
+
+		if(!motorsInterruptEnable) usleep(150000);
+
 		//for(j=0;j<getNbOfCmdForSeq(currentMotion)/2;j++){
 		if(j<getNbOfCmdForSeq(currentMotion)/2){
 			for(k=0;k<myMovementsTab[currentMotion][j][1]+2;k++){
@@ -154,8 +158,9 @@ void makeMotion(void){
 				}
 			}
 			sendUartFrame(myBufferOut,myBufferOut[1]+2);
+
 			motorsPositionValid=0;
-			if(currentMotionSpeed==1) usleep(125000);
+			if(currentMotionSpeed==1) usleep(150000);
 			j++;
 
 		}else {
