@@ -14,9 +14,6 @@
 #define FRM_ANGLE_COUNT 4
 #define FRM_ANGLE_DATA0 5
 
-//#define FRM_ACK_MOTORS 0x10
-//#define FRM_ACK_MOTORS_VALID 0xE0
-
 #define FRM_USONIC_DATA_VALID 3
 #define FRM_USONIC_DATA_MEASURE_H 4
 #define FRM_USONIC_DATA_MEASURE_L 5
@@ -67,7 +64,9 @@ unsigned char hwctrl_uartLCDDataInReady=0;
 unsigned char myLCDdataIn[50];
 
 unsigned char smoothValue=0;
-unsigned char motorsPositionValid;
+unsigned char motorsPositionValid=1;
+unsigned char motorsInterruptEnable=0;
+
 // Demarre une commande heartbit pour connaitre l'�tat du controller;
 void getControllerHeartBit(void);
 
@@ -90,9 +89,12 @@ void SetCompassInterruptsRange(unsigned int angleMin, unsigned int angleMax);
 void SetCompassInterruptEnable(unsigned char OnOff);
 // Valeur de distance lue [0] � l'angle [1]
 unsigned int ultrasonicDistance[2]={0,0};
+unsigned char uSonicDataValid;
 
 // Anlge d'orientation actuel
 unsigned int compassAngle;
+unsigned char compassDataValid;
+
 //
 unsigned char USonicSensorBusy=0;
 unsigned char CompassSensorBusy=0;
@@ -107,13 +109,8 @@ unsigned char controllerConnected=0;
 unsigned char controllerUSonicConnected=0;
 unsigned char controllerCompassConnected=0;
 
-unsigned char BuzzerFreq_mS;
-
 unsigned char waitForUltrasonicMotorMove=0;
 unsigned char th1_LowBatteryCheck(void);	// Contr�le etat des batteries
-
-void buzzerCtrl(unsigned char bipCount);
-void buzzerConfig(unsigned char On, unsigned int t1, unsigned int t2, unsigned char tHF);
 
 void setMotorAngle(unsigned char motor, unsigned char angle, unsigned char speed);	// Attribue un angle au servo moteur
 void setMotorState(unsigned char motor, unsigned char state); 						// d�fini l'�tat ON/OFF du moteur
@@ -142,7 +139,7 @@ unsigned char compassIsCalibrate;
 void CompassCalibrate(void);
 
 // active les interruptions des capteurs infrarouge
-void SetIRinterrupts(unsigned char Enable);
+void SetIRinterrupts(unsigned char IR0, unsigned char IR1, unsigned char IR2);
 void updateIRstate(void);
 unsigned char IRdetectValid;
 unsigned char IRdetectValue[3]={255, 255, 255};
@@ -167,16 +164,11 @@ void *hwctrlTask (void * arg)
 	// Initialisation GPIO du syst�me
 	GpioSetup();
 
-	// Initialisation du buzzer
-	buzzerConfig(1,300,100,1);		// Buzzer ON, 300ms, 100ms, 1khz (1mS)
-
 	usleep(10000);
-
-	buzzerCtrl(0);
 
 	RunningTask += TH1_SOA;
 
-	while(!EndOfApp){
+	while(!EndOfApp || (RunningTask&TH8_SOA) || (RunningTask&TH2_SOA)){
 //	  pthread_mutex_lock (&my_mutex);
 
 
@@ -206,8 +198,6 @@ void *hwctrlTask (void * arg)
 //	pthread_mutex_unlock (&my_mutex);
   }
 
-
-  pin_low(8,GPIO_BUZZER);								// D�sactive gpio buzzer
   iolib_free();											// Lib�re l'acc�s aux gpios
 
   printf( "# ARRET tache HW CTRL\n");
@@ -355,20 +345,15 @@ unsigned char CommandReadback;
 		CommandReadback=hwctrl_uartFrameIn[FRM_COMMAND_SLOT];
 
 	  // TRAITENENT DE LA DONNE
+
 	 switch(CommandReadback){
 
 // READ BACK ULTRASON APRES ENVOIE DE COMMANDES
  	 	 case 0	:	updateMotorState();						// Echo commande moteur (ON/OFF)
  	 	 	 	 	motorsPositionValid=1;
-
 					break;
+
 	 	 case 1	:	updateMotorAngle();						// Echo commande positionnement moteur pleine vitesse(0..90 degr�s)
-	 	 	 	 	motorsPositionValid=1;
-					break;
-	 	 case 2	:											// Echo commande positionnement moteur vitesses r�duite(0..90 degr�s)
-					break;
-
-	 	 case 9	:	motorsPositionValid=1;					// Echo commande interruption moteurs ON/OFF
 					break;
 
 // READ BACK ULTRASON APRES ENVOIE DE COMMANDES
@@ -475,7 +460,7 @@ void updateMotorState(void){
 // ---------------------------------------------------------------------------
 
 void updateUltrasonicDistance(void){ //Data non valide
-
+	uSonicDataValid=hwctrl_uartFrameIn[FRM_USONIC_DATA_VALID];
 	if(hwctrl_uartFrameIn[FRM_USONIC_DATA_VALID]){
 		 ultrasonicDistance[0]=hwctrl_uartFrameIn[FRM_USONIC_DATA_MEASURE_L]+(hwctrl_uartFrameIn[FRM_USONIC_DATA_MEASURE_H]*256);
 		 ultrasonicDistance[1]=motorsActualAngle[EYES_MOTOR_X];
@@ -489,7 +474,6 @@ void updateUltrasonicDistance(void){ //Data non valide
 			printf("Distance ultrasons a %d [deg]: INVALID\n",ultrasonicDistance[1]);
 			controllerUSonicConnected=0;			// Controller considéré comme indisponible
 		}
-
 	USonicSensorBusy=0;
 	th6_timerUSonicSampleStop();
 }
@@ -500,7 +484,7 @@ void updateUltrasonicDistance(void){ //Data non valide
 // ---------------------------------------------------------------------------
 
 void updateCompassAngle(void){ //Data non valide
-
+	compassDataValid=hwctrl_uartFrameIn[FRM_COMPASS_DATA_VALID];
 	if(hwctrl_uartFrameIn[FRM_COMPASS_DATA_VALID]){
 		compassAngle=hwctrl_uartFrameIn[FRM_COMPASS_DATA_MEASURE_L]+(hwctrl_uartFrameIn[FRM_COMPASS_DATA_MEASURE_H]*256);
 			if(hwctrl_uartDataInReady&&(hwctrl_uartAckDisplayStatus&UART_ACK_COMPASS)){
@@ -528,8 +512,8 @@ void GpioSetup(void){
 
 	iolib_setdir(8,GPIO_BATT_MOTOR, BBBIO_DIR_IN);		// P8.x en entr�e pour warning batterie
 	iolib_setdir(8,GPIO_BATT_BRAIN, BBBIO_DIR_IN);		// P8.x en entr�e pour warning batterie
-	iolib_setdir(8,GPIO_BUZZER, BBBIO_DIR_OUT);			// P8.x en sortie pour buzzer
-	pin_low(8,GPIO_BUZZER);								// D�sactive gpio buzzer
+	//iolib_setdir(8,GPIO_BUZZER, BBBIO_DIR_OUT);			// P8.x en sortie pour buzzer
+	//pin_low(8,GPIO_BUZZER);								// D�sactive gpio buzzer
 }
 
 // ---------------------------------------------------------------------------
@@ -547,58 +531,6 @@ unsigned char th1_LowBatteryCheck(void){
 		 batteryState|=0x02;
 	 } else batteryState&=0xFD;
 	 return(batteryState);
-}
-
-// ---------------------------------------------------------------------------
-// RETOURNE WARNING BATTERIE (0:no warning, 1:batt A low, 2:batt B low, 3, Both Low)
-// ---------------------------------------------------------------------------
-void buzzerCtrl(unsigned char bipCount){
-	static unsigned char BuzzOn=0;
-	static unsigned int nbBipToDo=0;
-
-	if(nbBipToDo>0){
-		  if(!th6_timerBuzzDutyHighReadyFlag){
-			  if(th6_timerSynFreqReadyFlag){
-				  BuzzOn=~BuzzOn;
-				  if(BuzzOn)pin_low(8,GPIO_BUZZER);
-				  else pin_high(8,GPIO_BUZZER);
-				  th6_timerSynFreqReadyFlag=0;
-			  }
-		  }else{
-
-			  th6_timerSynFreqStop();
-			  pin_low(8,GPIO_BUZZER);
-		  }
-		  if(th6_timerBuzzDutyLowReadyFlag){
-			  th6_timerSynFreqStart(BuzzerFreq_mS);						// Horloge 1khz
-			  th6_timerBuzzDutyLowReadyFlag=0;
-			  th6_timerBuzzDutyHighReadyFlag=0;
-			  if(nbBipToDo>0)nbBipToDo--;
-		  }
-	 }else
-	 {
-		 // reset compteur
-		 th6_timerBuzzDutyLowReadyFlag=0;
-		 th6_timerBuzzDutyHighReadyFlag=0;
-		 th6_timerSynFreqStop();
-	 }
-	if(bipCount>0){
-		nbBipToDo=bipCount;				// Bip demand� par utilisateur
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Configuration BUzzer
-// ON/OFF, timeON [ms], timeOFF [ms], Frequence BIP [ms]
-// ---------------------------------------------------------------------------
-
-void buzzerConfig(unsigned char On, unsigned int t1, unsigned int t2, unsigned char tHF){
-
-	if(On){
-		BuzzerFreq_mS=tHF;
-		th6_timerSynFreqStart(BuzzerFreq_mS);						// Horloge 1khz
-		th6_timerBuzzDutyStart(t1, t2);					// 1Hz, dutycycle 50%
-	}else th6_timerSynFreqStop();						// Horloge 1khz
 }
 
 // ----------------------------------------------
@@ -643,6 +575,7 @@ void setMotorsInterrupt(unsigned char Enable){
 	serialWrite(BufferOut, 4);
 	flag_uartOutBusy=0;
 
+	motorsInterruptEnable=Enable;
 	motorsPositionValid=1;
 }
 
@@ -650,10 +583,10 @@ void setMotorsInterrupt(unsigned char Enable){
 // ----------------------------------------------
 // Active/d�sactive les interruptions d'evenement de capteurs IR
 // ----------------------------------------------
-void SetIRinterrupts(unsigned char Enable){
+void SetIRinterrupts(unsigned char IR0, unsigned char IR1, unsigned char IR2){
 	while(flag_uartOutBusy);
 	flag_uartOutBusy=1;
-	unsigned char BufferOut[6]={170,4,32,Enable,Enable,Enable};
+	unsigned char BufferOut[6]={170,4,32,IR0,IR1,IR2};
 	serialWrite(BufferOut, 6);
 	flag_uartOutBusy=0;
 }
@@ -719,15 +652,15 @@ void updateIRstate(void){
 // Envoie une trame compl�te pr�d�finie
 // ----------------------------------------------
 void sendUartFrame(unsigned char *buffToSend, unsigned char nbByte){
-
 	while(flag_uartOutBusy);
 		flag_uartOutBusy=1;
 	serialWrite(buffToSend, nbByte);
+	int i;
 	flag_uartOutBusy=0;
 }
 
 
-// Affichage de la trame recue d�cod�e ou non
+// Affichage de la trame recue decodee ou non
 void HWctrl_displayAckToggle(unsigned char ackType){
 	if(hwctrl_uartAckDisplayStatus&ackType)hwctrl_uartAckDisplayStatus&=0xFF-ackType;
 	else hwctrl_uartAckDisplayStatus|=ackType;
@@ -743,7 +676,6 @@ void HWctrl_displayAckToggle(unsigned char ackType){
 // Contr�le de la reception d'une trame valide recue de l'afficheur LCD
 // ---------------------------------------------------------------------------
 void checkUartLCDData(void){
-
 	if(serial1Read(myLCDdataIn)){
 			hwctrl_uartLCDDataInReady=1;
 	}

@@ -20,8 +20,6 @@ extern void HWctrl_displayAckToggle(unsigned char ackType);
 
 extern unsigned char th1_LowBatteryCheck(void); // Retourne (0:no warning, 1:batt A low, 2:batt B low, 3, Both Low)
 
-extern void buzzerCtrl(unsigned char bipCount);	// S�quence de bip � produire
-
 // Configurtion buzzer (ON:1/OFF:0, timeON [ms], timeOFF [ms], Frequence BIP [ms])
 extern void buzzerConfig(unsigned char On, unsigned int t1, unsigned int t2, unsigned char tHF);
 
@@ -52,12 +50,17 @@ extern void SetCompassInterruptEnable(unsigned char OnOff);
 extern unsigned char compassIsCalibrate;
 
 
-extern void SetIRinterrupts(unsigned char Enable);
+extern void SetIRinterrupts(unsigned char IR0, unsigned char IR1, unsigned char IR2);
 extern unsigned char IRdetectValid;
 extern unsigned char IRdetectValue[3];
 
 // Valeur de distance lue [0] � l'angle [1]
+extern unsigned char uSonicDataValid;
 extern unsigned int ultrasonicDistance[2];
+
+// Anlge d'orientation actuel
+extern unsigned char compassDataValid;
+extern unsigned int compassAngle;
 
 // Etat de la connexion avec le controlleur de moteurs
 extern unsigned char controllerConnected;
@@ -70,12 +73,12 @@ extern unsigned char motorsActualAngle[NB_TOTAL_OF_MOTORS];
 extern unsigned char motorsActualState[NB_TOTAL_OF_MOTORS];
 
 extern unsigned char motorsPositionValid;
-
+extern unsigned char motorsInterruptEnable;
 extern unsigned char smoothValue;
 
 //Variable port série communication afficheur LCD
 extern unsigned char hwctrl_uartLCDDataInReady;
-
+extern unsigned char myLCDdataIn[50];
 // Demarre une commande heartbit pour connaitre l'�tat du controller;
 extern void getControllerHeartBit(void);
 
