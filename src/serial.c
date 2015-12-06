@@ -180,7 +180,8 @@ unsigned char serial1Setup(void){
 	//	PARODD - Odd parity (else even)
 	struct termios options;
 	tcgetattr(uart1_filestream, &options);
-	options.c_cflag = B115200 | CS8 | CLOCAL | CREAD;		//<Set baud rate
+	//options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;		//<Set baud rate
+		options.c_cflag = B115200 | CS8 | CLOCAL | CREAD;		//<Set baud rate
 //	options.c_cflag = B230400 | CS8 | CLOCAL | CREAD;		//<Set baud rate
 	options.c_iflag = IGNPAR;
 	options.c_oflag = 0;
@@ -209,52 +210,52 @@ unsigned char serial1Write(unsigned char *mySerialData, unsigned char count){
 // Fonction de lecture sur second  port COM Uart1
 unsigned char serial1Read(unsigned char *mySerialData){
 	unsigned char myChar;
-	static unsigned char bufferInput[30];
+	static unsigned char bufferInput[50];
 	static unsigned char cntChar=0;
 	static unsigned char sof=0;
-	static unsigned char flagAckReceive=0;
 
 	unsigned char i;
 
 
 	if (uart1_filestream != -1)
 	{
-	//bufferInput[cntChar] = serialPort1.ReadByte();
-
 	if(read(uart1_filestream, &myChar,1)!=-1){
-
 
 		if (sof == 0)
 		{
 			// Detection d'un nouvelle trame
 				if (myChar == 0xAA){
-					cntChar++;
+					cntChar=0;						// D�marre le comptage du nombre d'octet utile
 					sof = 1;
 				}
 				else
 				{
 					tcflush(uart1_filestream,TCIOFLUSH);	// Reset la récéption
-					cntChar = 0;
 					sof = 0;
 				}
 		}
 		else
 		{
 			// Donnée en cours de récéption
-			if(myChar == 0xEE){							// Attente fin de trame
+			if(myChar == 0xEE){
+				// Attente fin de trame
 				for(i=0;i<cntChar;i++){
 					mySerialData[i]=bufferInput[i];
 				}
+
+				tcflush(uart1_filestream,TCIOFLUSH);	// Reset la récéption
+				sof = 0;										// Attente nouvelle trame
 				return(1);
 			}
 			else{
-					if(cntChar>=25){							// mauvaise trame > 25 data max
+					if(cntChar>=35){							// mauvaise trame > 35 data max
 						tcflush(uart1_filestream,TCIOFLUSH);	// Reset la récéption
 						cntChar = 0;
 						sof = 0;
+					}else{
+						bufferInput[cntChar]=myChar;		// Enregistrement des données
+						cntChar++;
 					}
-					bufferInput[cntChar]=myChar;		// Enregistrement des données
-					cntChar++;
 			}
 		}
 	}
