@@ -1,6 +1,9 @@
 #define TRUE	1
 #define FALSE	0
 
+#define TO_LCD	0
+#define FROM_LCD 1
+
 #define SYS_STATUS	0
 #define SYS_IP_LAN	1
 #define SYS_IP_WLAN	2
@@ -20,12 +23,22 @@
 #include "th8_lcdDisplay.h"
 
 #include "manager.h"
-#include "th2_core.h"
 #include "th1_hwctrl.h"
+#include "th2_core.h"
 
 pthread_t th_lcd;
 
 unsigned char lcdBufferOut[50];
+
+// STATUS GENERAL DE L'APPLICATION
+struct SysStatus LcdLB_SystemStatus;
+struct ApplicationStatus LcdLB_OctopodStatus;
+struct hwStatus LcdLB_LLHwStatus;
+struct MotStatus LcdLB_MotorsStatus;
+struct SensStatus LcdLB_SensorsStatus;
+struct WayFinder LcdLB_MeasureMap;
+struct EthernetInfo LcdLB_SystemLan;
+
 
 void loadSysStatus();
 void loadSysIpLan();
@@ -37,7 +50,8 @@ void loadMotorAngle();
 void loadCompassMeas();
 void loadUSonicMeas();
 
-void Lcd_DisplayData(unsigned char CMD);
+void LcdReply(unsigned char CMD);
+void ProcessLCDrequest(void);
 
 // ***************************************************************************
 // ---------------------------------------------------------------------------
@@ -47,28 +61,28 @@ void Lcd_DisplayData(unsigned char CMD);
 
 void *lcdTask (void * arg)
 {
+	RunningTask += TH8_SOA;
 	printf ("# Demarrage tache HMI LCD: OK\n");
 
-	if(SystemStatus.AppStarted)SystemStatus.AppStarted=0;
-
-
 	 usleep(1000000);
 
-	 RunningTask += TH8_SOA;
-	 while(!EndOfApp){
+	 LcdReply (SYS_STATUS);
+
+	 while((!EndOfApp) | SystemStatus.AppStarted){
 //	  pthread_mutex_lock (&my_mutex);
 
-		 Lcd_DisplayData(0);
+		// Controle si donnée recue de l'afficheur LCD
+		 if(hwctrl_uartLCDDataInReady){
+			 ProcessLCDrequest();
+			 hwctrl_uartLCDDataInReady=0;
+		 }
+		// LcdReply (USONIC);
+
 		 usleep(100000);
-
-	  if(hwctrl_uartLCDDataInReady){
-		  hwctrl_uartLCDDataInReady=0;
-	  }
-
 //	pthread_mutex_unlock (&my_mutex);
   }
-	 usleep(1000000);
-	 Lcd_DisplayData(0);
+
+  LcdReply(SYS_STATUS);						// Renvoie au LCD l'état de fermeture de l'application
   printf( "# ARRET tache HMI LCD\n");
 
   RunningTask -= TH8_SOA;
@@ -76,10 +90,37 @@ void *lcdTask (void * arg)
 }
 
 // ---------------------------------------------------------------------------
+// Traite la trame recu sur port série LCD
+// ---------------------------------------------------------------------------
+
+void ProcessLCDrequest(void){
+	unsigned char RequestType;
+	unsigned char RequestCommand;
+
+	RequestType=myLCDdataIn[0];
+	RequestCommand=myLCDdataIn[1];
+
+	if(RequestType == 0){			// Requete de type STATUS...
+		switch(RequestCommand){
+			case SYS_STATUS : LcdReply (SYS_STATUS); break;
+			case SYS_IP_LAN : LcdReply (SYS_IP_LAN);break;
+			case SYS_IP_WLAN : LcdReply (SYS_IP_WLAN);break;
+			case APP_STATUS : LcdReply (APP_STATUS);break;
+			case LLHW_STATUS : LcdReply (LLHW_STATUS);break;
+			case APP_MOT_STATE : LcdReply (APP_MOT_STATE);break;
+			case APP_MOT_ANGLE : LcdReply (APP_MOT_ANGLE);break;
+			case COMPASS : LcdReply (COMPASS);break;
+			case USONIC : LcdReply (USONIC);break;
+			default	:	break;
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
 // LCD_SENDCMD Envoie de data défini à l'afficheur
 // ---------------------------------------------------------------------------
 
-void Lcd_DisplayData(unsigned char CMD)
+void LcdReply(unsigned char CMD)
 {
 	switch(CMD){
 		case SYS_STATUS : loadSysStatus(); break;
@@ -185,8 +226,8 @@ void loadMotorState(){
 
 	lcdBufferOut[0]=0xAA;
 	lcdBufferOut[1]=APP_MOT_STATE;
-	for(i=1;i<=26;i++){
-		lcdBufferOut[i]=MotorsStatus.State[i];
+	for(i=0;i<=25;i++){
+		lcdBufferOut[i+2]=MotorsStatus.State[i];
 	}
 		lcdBufferOut[28]=0xEE;
 	sendLCDUartFrame(lcdBufferOut, 29);
@@ -201,8 +242,8 @@ void loadMotorAngle(){
 	lcdBufferOut[0]=0xAA;
 
 	lcdBufferOut[1]=APP_MOT_ANGLE;
-	for(i=1;i<=26;i++){
-		lcdBufferOut[i]=MotorsStatus.Angle[i];
+	for(i=0;i<=25;i++){
+		lcdBufferOut[i+2]=MotorsStatus.Angle[i];
 	}
 	lcdBufferOut[28]=0xEE;
 
@@ -217,8 +258,8 @@ void loadCompassMeas(){
 	lcdBufferOut[1]=COMPASS;
 
 	lcdBufferOut[2]=SensorsStatus.CompassIsCalibrate;
-	lcdBufferOut[3]=SensorsStatus.Heading&0xFF00>>8;
-	lcdBufferOut[4]=SensorsStatus.Heading&0x00FF;
+	lcdBufferOut[3]=((SensorsStatus.Heading)&0xFF00)>>8;
+	lcdBufferOut[4]=(SensorsStatus.Heading)&0x00FF;
 
 	lcdBufferOut[5]=0xEE;
 	sendLCDUartFrame(lcdBufferOut, 6);
@@ -232,14 +273,17 @@ void loadUSonicMeas(){
 	lcdBufferOut[0]=0xAA;
 	lcdBufferOut[1]=USONIC;
 
-	lcdBufferOut[2]=SensorsStatus.Distance&0xFF00>>8;
+	lcdBufferOut[2]=(SensorsStatus.Distance&0xFF00)>>8;
 	lcdBufferOut[3]=SensorsStatus.Distance&0x00FF;
 	lcdBufferOut[4]=SensorsStatus.DistanceMotorX;
 	lcdBufferOut[5]=SensorsStatus.DistanceMotorY;
 
 	lcdBufferOut[6]=0xEE;
+
 	sendLCDUartFrame(lcdBufferOut, 7);
 };
+
+
 
 // ---------------------------------------------------------------------------
 // CREATION THREAD LCD TASK
