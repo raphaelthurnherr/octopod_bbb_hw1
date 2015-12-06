@@ -40,7 +40,7 @@ void ethernetCheck(void);
 unsigned char RunningTask;
 unsigned char EndOfApp;
 
-unsigned char SystemBatteryWarning[2];
+unsigned char SystemBatteryState[2];
 
 char SystemTaskReady;
 
@@ -51,11 +51,12 @@ char SystemTaskReady;
 // ***************************************************************************
 
 int main(void) {
+	unsigned char BattState;
 
 	ethernetCheck();
 
 	system("clear");
-	printf("\nOctopod V1.3.5  - 15/11/2015          \n");
+	printf("\nOctopod V1.3.5  - 27/11/2015          \n");
 	printf("---------------------------------------\n\n");
 	printf("# Octopod IP ETH0: %s \n", SystemLan.sIP_lan);
 	printf("# Octopod IP WLAN0: %s \n", SystemLan.sIP_wlan);
@@ -71,6 +72,15 @@ int main(void) {
 	else SystemTaskReady=FALSE;
 
 
+	BattState=th1_LowBatteryCheck();
+
+	// Contr0le des l'etat des batteries
+	if(BattState){
+		SystemBatteryState[0]=BattState&0x01;
+		SystemBatteryState[1]=(BattState&0x02)>>1;
+	}
+
+
 	// ---------------------------------------------------------------------------
 	// MAIN LOOP
 	// ---------------------------------------------------------------------------
@@ -81,16 +91,15 @@ int main(void) {
 
 // Controle chaques 30seconds
 		if(th6_timer30sManagerReadyFlag){
-			unsigned char BattState=th1_LowBatteryCheck();
+			BattState=th1_LowBatteryCheck();
 
-			// Contr�le des l'�tat des batteries, alarme+affichage ON si warning
+			// Contr0le des l'etat des batteries
 			if(BattState){
-				buzzerCtrl(3);		// Test beep
-				SystemBatteryWarning[0]=BattState&0x01;
-				SystemBatteryWarning[1]=BattState&0x02>>1;
+				SystemBatteryState[0]=BattState&0x01;
+				SystemBatteryState[1]=(BattState&0x02)>>1;
 			}
 
-			// Contrôle des connexion ethernet
+			// Controle des connexion ethernet
 			ethernetCheck();
 
 			printf("\nCHECK IP ETH0: %s \n", SystemLan.sIP_lan);
@@ -101,7 +110,7 @@ int main(void) {
 		usleep(100000);		/* Ralentit le thread d'ecriture... */
 	}
 
-	SystemTaskReady=0;
+	SystemTaskReady=FALSE;
 		usleep(1000000);		/* Ralentit le thread d'ecriture... */
 
 // Forcage arret des taches blocantes
@@ -117,7 +126,7 @@ int main(void) {
 		}
 
 		if(RunningTask>0){
-			usleep(2000000);
+			usleep(4000000);
 		}
 
 		printf("\n# Fin d' application, bye bye !\n");

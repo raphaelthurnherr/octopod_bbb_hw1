@@ -14,6 +14,6 @@
 extern unsigned char RunningTask;
 extern unsigned char EndOfApp;
 
-extern unsigned char SystemBatteryWarning[2];
+extern unsigned char SystemBatteryState[2];
 
 extern char SystemTaskReady;
