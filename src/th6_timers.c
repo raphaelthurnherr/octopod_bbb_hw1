@@ -9,17 +9,6 @@
 
 pthread_t th_timers;
 
-// Timers Synth�tiseur de frequence resolution 250uS
-unsigned int 	tmr_synFreqTarget=1;
-unsigned int 	tmr_synFreqCnt=0;
-unsigned char 	ultraSonPeriodic=0;
-unsigned char 	th6_timerSynFreqReadyFlag=1;
-unsigned char 	tmr_synFreqRunFlag=0;
-// Timers synt�tiseur de fr�quence
-void th6_timerSynFreqStart(unsigned int xmS);
-void th6_timerSynFreqStop(void);
-
-
 // Timers 30sec pour gestionnaire de tache
 void th6_timer30sManagerStart(unsigned int xmS);
 void th6_timer30sManagerStop(void);
@@ -62,15 +51,6 @@ unsigned int 	tmr_MotionIntervalTarget=300;
 unsigned int 	tmr_MotionIntervalCnt=0;
 unsigned char 	tmr_MotionIntervalRunFlag=0;
 
-// Timers pour PWM buzzer (dutycycle)
-int tmr_BuzzDutyHighTarget = 1000;
-int tmr_BuzzDutyLowTarget = 1000;
-int tmr_BuzzDutyCnt=0;
-unsigned char tmr_BuzzDutyRunFlag;
-unsigned char th6_timerBuzzDutyHighReadyFlag;
-unsigned char th6_timerBuzzDutyLowReadyFlag;
-void th6_timerBuzzDutyStart(unsigned int mS_high,unsigned int mS_low);
-void th6_timerBuzzDutyStop(void);
 
 // ***************************************************************************
 // ---------------------------------------------------------------------------
@@ -80,29 +60,11 @@ void th6_timerBuzzDutyStop(void);
 
 void *timersTask (void * arg)
 {
+	RunningTask += TH6_SOA;
 	printf ("# Demarrage tache TIMERS: OK\n");
 
-	RunningTask += TH6_SOA;
   while(!EndOfApp){
 //	  pthread_mutex_lock (&my_mutex);
-
-	 // Evaluation timer synth�tiseur de fr�quence
-	 if(tmr_synFreqCnt>=tmr_synFreqTarget){
-		 th6_timerSynFreqReadyFlag=1;
-		 tmr_synFreqCnt=0;
-	 }
-	 if(tmr_synFreqRunFlag)tmr_synFreqCnt++;
-
-	 // Evaluation timer pour g�n�ration dutycycle HIGH
-	 if(tmr_BuzzDutyCnt>=tmr_BuzzDutyHighTarget){
-		 th6_timerBuzzDutyHighReadyFlag=1;
-	 }
-	 // Evaluation timer pour g�n�ration dutycycle LOW
-	 if(tmr_BuzzDutyCnt>=tmr_BuzzDutyLowTarget){
-		 th6_timerBuzzDutyLowReadyFlag=1;
-		 tmr_BuzzDutyCnt=0;
-	 }
-	 if(tmr_BuzzDutyRunFlag)tmr_BuzzDutyCnt++;
 
 	 // Evaluation timer 30sec pour gestionnaire de tache
 	 if(tmr_30sManagerCnt>=tmr_30sManagerTarget){
@@ -150,24 +112,6 @@ void *timersTask (void * arg)
   usleep(10000);
   RunningTask -= TH6_SOA;
   pthread_exit (0);
-}
-
-// ---------------------------------------------------------------------------
-// FONCTION TIMER SYNTHETISEUR DE FREQUENCE
-// ---------------------------------------------------------------------------
-
-// Timer START
-void th6_timerSynFreqStart(unsigned int xmS){
-	tmr_synFreqTarget = xmS;
-	tmr_synFreqCnt=0;
-	th6_timerSynFreqReadyFlag=0;
-	tmr_synFreqRunFlag=1;
-}
-
-// Timer STOP
-void th6_timerSynFreqStop(void){
-	tmr_synFreqRunFlag=0;
-	th6_timerSynFreqReadyFlag=0;
 }
 
 // ---------------------------------------------------------------------------
@@ -245,28 +189,6 @@ void th6_timerMotionIntervalStart(void){
 void th6_timerMotionIntervalStop(void){
 	tmr_MotionIntervalRunFlag=0;
 	th6_timerMotionIntervalReadyFlag=0;
-}
-
-
-// ---------------------------------------------------------------------------
-// FONCTION TIMER POUR GENERATION DUTYCYCLE
-// ---------------------------------------------------------------------------
-
-// Timer START
-void th6_timerBuzzDutyStart(unsigned int mS_high,unsigned int mS_low){
-	tmr_BuzzDutyHighTarget = mS_high;
-	tmr_BuzzDutyLowTarget = mS_high+mS_low;
-	tmr_BuzzDutyCnt=0;
-	th6_timerBuzzDutyHighReadyFlag=0;
-	th6_timerBuzzDutyLowReadyFlag=0;
-	tmr_BuzzDutyRunFlag=1;
-}
-
-// Timer STOP
-void th6_timerBuzzDutyStop(void){
-	tmr_BuzzDutyRunFlag=0;
-	th6_timerBuzzDutyHighReadyFlag=0;
-	th6_timerBuzzDutyLowReadyFlag=0;
 }
 
 

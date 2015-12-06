@@ -12,13 +12,6 @@ extern void th6_timerSynFreqStart(unsigned int xmS);
 extern void th6_timerSynFreqStop(void);
 
 
-// Timers pour PWM buzzer (dutycycle)
-extern unsigned char th6_timerBuzzDutyHighReadyFlag;
-extern unsigned char th6_timerBuzzDutyLowReadyFlag;
-
-extern void th6_timerBuzzDutyStart(unsigned int mS_high,unsigned int mS_low);
-extern void th6_timerBuzzDutyStop(void);
-
 // Timers 30sec pour gestionnaire de tache
 extern unsigned char th6_timer30sManagerReadyFlag;
 extern void th6_timer30sManagerStart(unsigned int xmS);
