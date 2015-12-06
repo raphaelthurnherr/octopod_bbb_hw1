@@ -20,14 +20,14 @@ pthread_t th_tcp;
 
 void *tcpTask (void * arg)
 {
+	RunningTask += TH4_SOA;
+
 	if(tcpOpen(TCP_PORT)){
 		printf ("# Demarrage tache TCP sur port %d: OK\n",TCP_PORT);
 	}
 	else{
 		printf( "# Demarrage tache TCP sur port %d: ERREUR\n",TCP_PORT );
 	}
-
-	RunningTask += TH4_SOA;
 
   while(!EndOfApp){
 //	  pthread_mutex_lock (&my_mutex);
@@ -103,9 +103,6 @@ void *tcpTask (void * arg)
 
 			case 20	 : 	setMotionLoop(0);
 						UICommand(TEST_SEARCH_BEST_WAY);
-						break;
-
-			case 21  :	UICommand((5<<4)|TEST_BUZZER);
 						break;
 
 			// VITESSES
