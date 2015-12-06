@@ -25,9 +25,9 @@ void *consoleTask (void * arg)
 	int myConsoleCommand;					// Commande utilisateur recue
 	unsigned int myValue;					// Valeur utilisateur recue
 
+	RunningTask += TH3_SOA;
 	printf ("# Demarrage tache CONSOLE: OK\n");
 
-	RunningTask += TH3_SOA;
 	while(!EndOfApp){
 	//	  pthread_mutex_lock (&my_mutex);
 
@@ -49,7 +49,6 @@ void *consoleTask (void * arg)
 		printf(" 504  : Test boussole \n");
 		printf(" 505  : Calibration boussole \n");
 		printf(" 506  : Test interrupt boussole 170-190 deg\n");
-		printf(" 600  : Test beep\n");
 		printf(" 601  : Autocalibration hexapod\n");
 		printf(" 666  : Quitter\n");
 
@@ -130,12 +129,6 @@ void *consoleTask (void * arg)
 
 				// Modification du temps d'envoie entre les commandes (ms)
 				case	506	:	UICommand(INT_COMPASS);
-								break;
-
-				// Envoie une s�quence de beep
-				case	600	:	printf("\n Nombre de beep: ");
-								scanf("%d",&myValue);
-								UICommand((myValue<<4)|TEST_BUZZER);
 								break;
 
 				// D�marre une proc�dure d'autocalibration
