@@ -41,21 +41,28 @@ void systemCheck(void);
 // ***************************************************************************
 
 void *coreTask (void * arg){
+	RunningTask += TH2_SOA;
+
 	printf ("# Demarrage tache CORE: OK\n");
 
-
-	RunningTask += TH2_SOA;
-	while(!EndOfApp){
+	while(!EndOfApp || (RunningTask&TH8_SOA)){
 
 		// Contrôle l'état global du système
 		systemCheck();
 
+		SensorsStatus.DistanceValid=uSonicDataValid;
+		SensorsStatus.CompassValid=compassDataValid;;
+
+		SensorsStatus.Heading=compassAngle;
+		SensorsStatus.Distance=ultrasonicDistance[0];
+
+		//ReadStartUltrasonicSensor();
+		//usleep(20000);
+		//ReadStartCompassSensor();
+		//usleep(20000);
+
 	//  Traitement des commandes recues via interfaces utilisateurs (Console, TCP)
 		if(remoteCommandReadyData) processUICommand();
-
-
-	  // -> Raffraichissement des mesure de capteurs
-	  // -> Search my way, etc...
 
   usleep(500000);
   }
@@ -73,7 +80,7 @@ void *coreTask (void * arg){
 unsigned char SearchMyWay(unsigned char *myScan, unsigned char depth, unsigned char DisplayResult){
 	unsigned char bestWay;
 	unsigned char i;
-	  ScanZone(0,90,depth,myScan);
+	  ScanZone(0,120,depth,myScan);
 	  makeMapZone(depth, myScan);
 	  MapZoneFiltre1(depth);
 	  MapZoneFiltre2(depth);
@@ -88,7 +95,7 @@ unsigned char SearchMyWay(unsigned char *myScan, unsigned char depth, unsigned c
 		  printf("| %d \n\n",bestWay);
 
 	  }
-	  setMotorAngle(EYES_MOTOR_X,60,1);	// Attribue un angle au servo moteur X
+	  setMotorAngle(EYES_MOTOR_X,bestWay,1);	// Attribue un angle au servo moteur X
 	  setMotorAngle(EYES_MOTOR_Y,60,1);	// Attribue un angle au servo moteur Y
 	  return(bestWay);
 }
@@ -109,11 +116,11 @@ void processUICommand(void){
 	usleep(10000);
 	switch(myCommand){
 		case TEST_SEARCH_SCAN : break;
-		case TEST_SEARCH_BEST_WAY : SearchMyWay(MeasureMap.distanceMap, 1, 1); break;
-		case TEST_BUZZER : buzzerCtrl(myValue); break;
+		case TEST_SEARCH_BEST_WAY : setMotionLoop(0);
+									SearchMyWay(MeasureMap.distanceMap, 1, 1); break;
 		case TEST_LEGS : break;
 		case REMOTE_RUN_AI : AIenable=1; break;
-		case RUN_MOTION : 	AIenable=0;						// D�sactive l'intelligence artificielle.
+		case RUN_MOTION : 	AIenable=0;						// Desactive l'intelligence artificielle.
 							setMotorsInterrupt(1);			// Active les interruption info moteur en place
 							usleep(100000);
 							setMotion(myValue); break;
@@ -125,7 +132,6 @@ void processUICommand(void){
 
 		case CALIB_COMPASS: compassIsCalibrate=0;
 							CompassCalibrate();
-							buzzerCtrl(2);		// Test beep
 							break;
 
 		case INT_COMPASS : 	SetCompassInterruptsRange(175, 185);
@@ -145,23 +151,24 @@ void changeMotion (unsigned char motionType){
 	static signed int correction[24];
 
 // ----- MODIFICATION DE LA HAUTEUR !
-	// MODIFIE LES OFFSET x2, x3 de chaque patte A, B, C, D, E, F pour modifier la hauteur
+	// MODIFIE LES OFFSET x2, x3 de chaque patte A, B, C, D, E, F, G, H pour modifier la hauteur
 	if(motionType==MOTION_BODY_DW){
-			// A23, B23, C23 +
-			correction[1]=correction[2]=correction[4]=correction[5]=correction[7]=correction[8]+=5;
-			// D23, E23, F23 - (moteur a l'envers mecaniquement)
-			correction[10]=correction[11]=correction[13]=correction[14]=correction[16]=correction[17]-=5;
+			// A23, B23, C23, D23 +
+			correction[1]=correction[2]=correction[4]=correction[5]=correction[7]=correction[8]=correction[10]=correction[11]+=5;
+			// E23, F23, G23, G24 - (moteur a l'envers mecaniquement)
+			correction[13]=correction[14]=correction[16]=correction[17]=correction[19]=correction[20]=correction[22]=correction[23]-=5;
 		}
 	if(motionType==MOTION_BODY_UP){
-			// A23, B23, C23 -
-			correction[1]=correction[2]=correction[4]=correction[5]=correction[7]=correction[8]-=5;
-			// D23, E23, F23 + (moteur a l'envers mecaniquement)
-			correction[10]=correction[11]=correction[13]=correction[14]=correction[16]=correction[17]+=5;
+			// A23, B23, C23,D23 -
+		correction[1]=correction[2]=correction[4]=correction[5]=correction[7]=correction[8]=correction[10]=correction[11]-=5;
+			// E23, F23, G23, G24 + (moteur a l'envers mecaniquement)
+		correction[13]=correction[14]=correction[16]=correction[17]=correction[19]=correction[20]=correction[22]=correction[23]+=5;
 	}
 // ----- MODIFICATION DE L ASSIETTE AVANT ARRIERE
 	// MODIFIE LES OFFSET x2, x3 de chaque patte A, B, C, D, E, F pour mofifier la hauteur avant
 	if(motionType==MOTION_HEAD_DW){
 		correction[1]=correction[2]+=5; // A23
+
 //			correction[4]=correction[5]+=5; // B12
 		correction[7]=correction[8]-=5; // C23
 
@@ -186,39 +193,39 @@ void changeMotion (unsigned char motionType){
 	// MODIFIE LES OFFSET x1de chaque patte A, B, C, D, E, F pour mofifier la rotation
 	if(motionType==MOTION_BODY_BACK){
 		// A1, B1, C1 +
-		correction[0]=correction[3]=correction[6]+=5;
+		correction[0]=correction[3]=correction[6]=correction[9]+=5;
 		// D1, E1, E1 - (moteurai a l'envers mecaniquement)
-		correction[9]=correction[12]=correction[15]-=5;
+		correction[12]=correction[15]=correction[18]=correction[21]-=5;
 		}
 
 	if(motionType==MOTION_BODY_FORWARD){
 		// A12, B12, C12 +
-		correction[0]=correction[3]=correction[6]-=5;
+		correction[0]=correction[3]=correction[6]=correction[9]-=5;
 		// D1, E1, E1 - (moteur a l'envers mecaniquement)
-		correction[9]=correction[12]=correction[15]+=5;
+		correction[12]=correction[15]=correction[18]=correction[21]+=5;
 		}
 
 // ----- MODIFICATION DES PATTES EXTERIEURS
 	if(motionType==MOTION_HAND_OPEN){
-		correction[2]=correction[5]=correction[8]-=5;
+		correction[2]=correction[5]=correction[8]=correction[11]-=5;
 		// D1, E1, E1 - (moteur a l'envers mecaniquement)
-		correction[11]=correction[14]=correction[17]+=5;
+		correction[14]=correction[17]=correction[20]=correction[23]+=5;
 		}
 
 	if(motionType==MOTION_HAND_CLOSE){
-		correction[2]=correction[5]=correction[8]+=5;
+		correction[2]=correction[5]=correction[8]=correction[11]+=5;
 		// D1, E1, E1 - (moteur a l'envers mecaniquement)
-		correction[11]=correction[14]=correction[17]-=5;
+		correction[14]=correction[17]=correction[20]=correction[23]-=5;
 		}
 
 	if(motionType==MOTION_RESET){
-		for (i=0;i<18;i++)
+		for (i=0;i<24;i++)
 			correction[i]=0;
 		}
 
 
 
-	for (i=0;i<18;i++){
+	for (i=0;i<24;i++){
 		if(correction[i]<=-90) correction[i]=-90;
 		if(correction[i]>=90) correction[i]=90;
 
@@ -245,8 +252,8 @@ void systemCheck(void){
 			else SystemStatus.LanWifiReady=FALSE;
 
 	// Contrôle de l'état des batteries
-			SystemStatus.Batt1Warning=SystemBatteryWarning[0];
-			SystemStatus.Batt2Warning=SystemBatteryWarning[1];
+			SystemStatus.Batt1Warning=SystemBatteryState[0];
+			SystemStatus.Batt2Warning=SystemBatteryState[1];
 
 	// Contrôle de la connexion du contrôleur hardware bas niveau
 			if(!SystemStatus.LLHwConnected){
@@ -286,11 +293,11 @@ void systemCheck(void){
 
 								if(controllerCompassConnected) LLHwStatus.CompassReady=TRUE;
 								else LLHwStatus.CompassReady=FALSE;
-							}
+							}else SensorsStatus.CompassIsCalibrate=compassIsCalibrate;
 
 
 							// Contrôle de l'état des capteurs infrarouge, mise sous interruption
-							SetIRinterrupts(1);
+							//SetIRinterrupts(0, 0, 0);
 							usleep(50000);
 
 							if(IRdetectValid){

@@ -9,7 +9,7 @@
 #define TEST_SEARCH_SCAN		1
 #define TEST_SEARCH_BEST_WAY	2
 #define TEST_SEARCH_MOVING		3
-#define TEST_BUZZER				4
+
 #define TEST_LEGS				5
 
 #define REMOTE_RUN_AI			6
@@ -92,6 +92,7 @@ struct WayFinder{
 };
 
 
+// STATUS GENERAL DE L'APPLICATION
 struct SysStatus SystemStatus;
 struct ApplicationStatus OctopodStatus;
 struct hwStatus LLHwStatus;
