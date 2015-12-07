@@ -56,7 +56,7 @@ int main(void) {
 	ethernetCheck();
 
 	system("clear");
-	printf("\nOctopod V1.3.5  - 27/11/2015          \n");
+	printf("\nOctopod V1.4.0  - 06/12/2015          \n");
 	printf("---------------------------------------\n\n");
 	printf("# Octopod IP ETH0: %s \n", SystemLan.sIP_lan);
 	printf("# Octopod IP WLAN0: %s \n", SystemLan.sIP_wlan);
@@ -102,8 +102,9 @@ int main(void) {
 			// Controle des connexion ethernet
 			ethernetCheck();
 
-			printf("\nCHECK IP ETH0: %s \n", SystemLan.sIP_lan);
-			printf("CHECK IP WLAN0: %s \n", SystemLan.sIP_wlan);
+			// DEBUG
+			// printf("\nCHECK IP ETH0: %s \n", SystemLan.sIP_lan);
+			// printf("CHECK IP WLAN0: %s \n", SystemLan.sIP_wlan);
 
 			th6_timer30sManagerReadyFlag=0;
 		}
