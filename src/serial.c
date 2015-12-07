@@ -236,8 +236,8 @@ unsigned char serial1Read(unsigned char *mySerialData){
 		}
 		else
 		{
-			// Donnée en cours de récéption
-			if(myChar == 0xEE){
+			// Donneee en cours de reception
+			if(myChar == 0xFE){
 				// Attente fin de trame
 				for(i=0;i<cntChar;i++){
 					mySerialData[i]=bufferInput[i];
