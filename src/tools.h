@@ -5,11 +5,11 @@
 
 extern unsigned char BatteryCheck(unsigned char DisplayWarning);
 
-// Scan la distance d'un angle donné à un autre avec un pas et stock les valeurs à une adresse définie
-extern void ScanZone(unsigned char fromAngle, unsigned char toAngle, unsigned char angleStep, unsigned char *Target);
+// Scan la distance sur 90 degrés selon kun offset défini avec un pas et stock les valeurs à une adresse définie
+extern void ScanZone90(unsigned char offsetAngle,unsigned char angleStep, unsigned char *Target);
 
 
-extern void makeMapZone(unsigned char AngleScanDept, unsigned char *tabAngleDistance);
+extern void makeMapZone(unsigned char AngleScanDept, unsigned int *tabAngleDistance);
 extern void displayMapZone(unsigned char AngleScanDept, unsigned char filtre);
 extern void MapZoneFiltre1(unsigned char AngleScanDept);
 extern void MapZoneFiltre2(unsigned char AngleScanDept);

@@ -5,11 +5,11 @@
 #include "th7_motion.h"
 
 
-unsigned int mapZone[40][90];   // zones de (200cm) chaque 10cm sur 90 degres
-unsigned int mapZoneFiltre1[40][90];   // zones de (200cm) chaque 10cm sur 90 degres
-unsigned int mapZoneFiltre2[40][90];   // zones de (200cm) chaque 10cm sur 90 degres
+unsigned int mapZone[50][90];   // zones de (200cm) chaque 10cm sur 90 degres
+unsigned int mapZoneFiltre1[50][90];   // zones de (200cm) chaque 10cm sur 90 degres
+unsigned int mapZoneFiltre2[50][90];   // zones de (200cm) chaque 10cm sur 90 degres
 
-void makeMapZone(unsigned char AngleScanDept, unsigned char *tabAngleDistance);
+void makeMapZone(unsigned char AngleScanDept, unsigned int *tabAngleDistance);
 void displayMapZone(unsigned char AngleScanDept, unsigned char filtre);
 void MapZoneFiltre1(unsigned char AngleScanDept);
 void MapZoneFiltre2(unsigned char AngleScanDept);
@@ -20,7 +20,7 @@ unsigned char calcBestAngle(unsigned char AngleScanDept);
 unsigned char BatteryCheck(unsigned char DisplayWarning);
 
 // Scan la distance d'un angle donn� � un autre avec un pas et stock les valeurs � une adresse d�finie
-void ScanZone(unsigned char fromAngle, unsigned char toAngle, unsigned char angleStep, unsigned char *Target);
+void ScanZone90(unsigned char offsetAngle, unsigned char angleStep, unsigned int *Target);
 
 void hexapodCalibrateCompass(void);
 
@@ -62,56 +62,26 @@ unsigned char BatteryCheck(unsigned char DisplayWarning){
 // Entr�e: angleStep, nombre de degres entre les scans
 // Entr�e: Target, addresse pour enregistrement des valeurs [0] si pas d'enregistrement];
 // ***************************************************************************
-void ScanZone(unsigned char fromAngle, unsigned char toAngle, unsigned char angleStep, unsigned char *Target){
-
+void ScanZone90(unsigned char offsetAngle, unsigned char angleStep, unsigned int *Target){
+	unsigned char i;
 	unsigned char reverse=0;
 	signed char angleActual=0;
 
 	// SERVOMOTEUR ULTRASON ACTIF
 	setMotorState(EYES_MOTOR_X,1);
-	usleep(100000);
+	usleep(50000);
 	ReadStartUltrasonicSensor();
 
+	angleActual=offsetAngle;
 
-// DEFINI LE SENS DE MESURE ET CONTROLE LE PAS DE MESURE
-	// Sens anti-horaire de mesure
-	if(fromAngle>toAngle)
-		{
-			// Controle que le pas de entre dans la plage de mesure
-			if(angleStep > fromAngle-toAngle) angleStep = fromAngle-toAngle;
-			reverse=1;
-		} else
-			// Sens Horaire de mesure
-			if(fromAngle<toAngle)
-				{
-					// Controle que le pas de entre dans la plage de mesure
-					if(angleStep > toAngle-fromAngle)angleStep = toAngle-fromAngle;
-					reverse=0;
-				}
-
-
-angleActual=fromAngle;
-
-if(!reverse){
-	while(angleActual<=toAngle)
+	while(angleActual<=offsetAngle+90)
 	{
 		// DEMARRE LA MESURE DE DISTANCE A L'ANGLE DONNE
 		getUltrasonicDistance(angleActual);
 		usleep(50000);
 		if(ultrasonicDistance[1]==angleActual){
-			Target[angleActual]=ultrasonicDistance[0];
+			Target[angleActual-offsetAngle]=ultrasonicDistance[0]/10;
 			angleActual+=angleStep;
-		}
-	}
-}else
-	while(angleActual>=toAngle)	// Sens Horaire de mesure
-	{
-		// DEMARRE LA MESURE DE DISTANCE A L'ANGLE DONNE
-		getUltrasonicDistance(angleActual);
-		usleep(50000);
-		if(ultrasonicDistance[1]==angleActual){
-			Target[angleActual]=ultrasonicDistance[0];
-			angleActual-=angleStep;
 		}
 	}
 	StopUltrasonicSensor();
@@ -125,7 +95,7 @@ if(!reverse){
 // Entr�e: R�solution angulaire � traiter [degres]
 // ***************************************************************************
 
-void makeMapZone(unsigned char AngleScanDept, unsigned char *tabAngleDistance)
+void makeMapZone(unsigned char AngleScanDept, unsigned int *tabAngleDistance)
 {
 	unsigned int i;
 	unsigned int indexOnMap;
@@ -135,7 +105,7 @@ void makeMapZone(unsigned char AngleScanDept, unsigned char *tabAngleDistance)
 
     // Efface de tableau de zone
     for(i=0;i<90;i+=AngleScanDept)
-        for (indexOnMap = 0; indexOnMap < 40; indexOnMap++)
+        for (indexOnMap = 0; indexOnMap < 50; indexOnMap++)
             mapZone[indexOnMap][i]=0;
 
 
@@ -145,7 +115,7 @@ void makeMapZone(unsigned char AngleScanDept, unsigned char *tabAngleDistance)
         // Converti la mesure en un index de tableau
         dist = tabAngleDistance[i];
         indexOnMap = (int)round(dist / 5);
-        if (indexOnMap > 39) indexOnMap = 39;
+        if (indexOnMap > 49) indexOnMap = 49;
 
         mapZone[indexOnMap][i] = 1;
     }
@@ -164,7 +134,7 @@ void displayMapZone(unsigned char AngleScanDept, unsigned char filtre){
 
 	printf("\n");
 
-	for(indexDist=40;indexDist>0;indexDist--){
+	for(indexDist=50;indexDist>0;indexDist--){
 		printf("%03d cm- ",indexDist*5);
 		switch(filtre){
 		case 0 : 		for(i=0;i<90;i+=AngleScanDept){
@@ -202,12 +172,12 @@ void MapZoneFiltre1(unsigned char AngleScanDept)
 
     // Efface de tableau de zone
     for (i = 0; i < 90; i+=AngleScanDept)
-        for (indexOnMap = 0; indexOnMap < 40; indexOnMap++)
+        for (indexOnMap = 0; indexOnMap < 50; indexOnMap++)
             mapZoneFiltre1[indexOnMap][i] = 0;
 
 
     // Creation de la map
-    for (indexOnMap = 1; indexOnMap < 40; indexOnMap++)
+    for (indexOnMap = 1; indexOnMap < 50; indexOnMap++)
     {
         for (i = 0; i < 90;i+=AngleScanDept)
             if (mapZone[indexOnMap][i] != 0)
@@ -246,12 +216,12 @@ void MapZoneFiltre2(unsigned char AngleScanDept)
 
     // Efface de tableau de zone
     for (i = 0; i < 90; i+=AngleScanDept)
-        for (indexOnMap = 0; indexOnMap < 40; indexOnMap++)
+        for (indexOnMap = 0; indexOnMap < 50; indexOnMap++)
             mapZoneFiltre2[indexOnMap][i] = 0;
 
 
     // Creation de la map
-    for (indexOnMap = 1; indexOnMap < 40; indexOnMap++)
+    for (indexOnMap = 1; indexOnMap < 50; indexOnMap++)
     {
         for (i = 0; i < 90; i+=AngleScanDept)
             if (mapZoneFiltre1[indexOnMap][i] ==1){
@@ -262,7 +232,7 @@ void MapZoneFiltre2(unsigned char AngleScanDept)
                 {
                     // debug
                 //    mapZoneFiltre2[indexOnMap][i] = 0;
-                    mapZoneFiltre2[39][i] = 1;
+                    mapZoneFiltre2[49][i] = 1;
 
                 }
                 else mapZoneFiltre2[indexOnMap][i] = 1;
@@ -300,17 +270,17 @@ unsigned char calcBestAngle(unsigned char AngleScanDept)
 
       // Efface de tableau de zone
    for (i = 0; i < 90; i+=AngleScanDept)
-       for (indexOnMap = 0; indexOnMap < 40; indexOnMap++)
+       for (indexOnMap = 0; indexOnMap < 50; indexOnMap++)
            myWays[i] = 0;
 
 
    // Creation de la map
    for (i = 0; i < 90; i+=AngleScanDept)
    {
-       for (indexOnMap = 0; indexOnMap < 40; indexOnMap++)
+       for (indexOnMap = 0; indexOnMap < 50; indexOnMap++)
        {
            if (mapZoneFiltre2[indexOnMap][i] == 0) myWays[i] += 1;
-           else indexOnMap = 39;
+           else indexOnMap = 49;
        }
    }
 
@@ -410,12 +380,12 @@ void hexapodCalibrateCompass(void){
 
 	sleep(29);
 
-	// S�quence rotation droite
+	// Sequence rotation droite
 	setMotion(4);
 
 	sleep(29);
 
-	// S�quance stand-up
+	// Sequance stand-up
 	setMotion(0);
 
 	sleep(1);
