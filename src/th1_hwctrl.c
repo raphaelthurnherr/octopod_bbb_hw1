@@ -87,7 +87,7 @@ void ReadStartCompassSensor(void); // Start l'quisition de distance par le contr
 void StopCompassSensor(void); 		// Stop l'quisition de distance par le controleur
 void SetCompassInterruptsRange(unsigned int angleMin, unsigned int angleMax);
 void SetCompassInterruptEnable(unsigned char OnOff);
-// Valeur de distance lue [0] � l'angle [1]
+// Valeur de distance lue [0] a l'angle [1]
 unsigned int ultrasonicDistance[2]={0,0};
 unsigned char uSonicDataValid;
 
@@ -465,7 +465,7 @@ void updateUltrasonicDistance(void){ //Data non valide
 		 ultrasonicDistance[0]=hwctrl_uartFrameIn[FRM_USONIC_DATA_MEASURE_L]+(hwctrl_uartFrameIn[FRM_USONIC_DATA_MEASURE_H]*256);
 		 ultrasonicDistance[1]=motorsActualAngle[EYES_MOTOR_X];
 			if(hwctrl_uartDataInReady&&(hwctrl_uartAckDisplayStatus&UART_ACK_ULTRASONIC)){
-				printf("Distance ultrasons a %d [deg]: %.1f [cm]\n",ultrasonicDistance[1],(float)ultrasonicDistance[0]/10);
+				printf("Distance ultrasons a %d [deg]: %d [cm]\n",ultrasonicDistance[1],ultrasonicDistance[0]/10);
 			}
 			controllerUSonicConnected=1;			// Controller considéré comme disponible
 	}
